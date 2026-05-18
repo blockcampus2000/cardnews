@@ -13,20 +13,31 @@ jobs:
         with:
           fetch-depth: 2
 
+      - name: Check Telegram secrets
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: |
+          if [ -z "$TELEGRAM_BOT_TOKEN" ]; then echo "::error::TELEGRAM_BOT_TOKEN secret is not set"; exit 1; fi
+          if [ -z "$TELEGRAM_CHAT_ID" ]; then echo "::error::TELEGRAM_CHAT_ID secret is not set"; exit 1; fi
+          echo "Both secrets are set."
+
       - name: Detect new daily folder
         id: find
         run: |
-          set -e
-          # 이번 커밋에서 새로 추가/변경된 daily/{folder} 경로 추출
-          FOLDER=$(git diff --name-only HEAD~1 HEAD 2>/dev/null | grep -oE '^daily/[^/]+' | sort -u | head -1 || true)
-          if [ -n "$FOLDER" ] && [ -d "$FOLDER/png" ]; then
-            COUNT=$(ls "$FOLDER/png/"*.png 2>/dev/null | wc -l)
-            echo "folder=$FOLDER" >> $GITHUB_OUTPUT
-            echo "count=$COUNT" >> $GITHUB_OUTPUT
-          else
-            echo "folder=" >> $GITHUB_OUTPUT
-            echo "count=0" >> $GITHUB_OUTPUT
+          FOLDER=""
+          COUNT=0
+          if git rev-parse HEAD~1 >/dev/null 2>&1; then
+            FOLDER=$(git diff --name-only HEAD~1 HEAD | grep -oE '^daily/[^/]+' | sort -u | head -1 || true)
           fi
+          if [ -n "$FOLDER" ] && [ -d "$FOLDER/png" ]; then
+            COUNT=$(ls "$FOLDER/png/"*.png 2>/dev/null | wc -l || echo 0)
+          else
+            FOLDER=""
+          fi
+          echo "Detected folder: '$FOLDER' (count: $COUNT)"
+          echo "folder=$FOLDER" >> "$GITHUB_OUTPUT"
+          echo "count=$COUNT" >> "$GITHUB_OUTPUT"
 
       - name: Send text notification
         env:
@@ -38,25 +49,16 @@ jobs:
           FOLDER: ${{ steps.find.outputs.folder }}
           COUNT: ${{ steps.find.outputs.count }}
         run: |
+          NL=$'\n'
           if [ -n "$FOLDER" ]; then
-            MESSAGE="새 카드뉴스가 올라왔습니다 (${COUNT}장)
-
-폴더: ${FOLDER}
-커밋: ${COMMIT_MESSAGE}
-링크: ${COMMIT_URL}
-
-로컬 PC는 09:15에 자동 git pull 됩니다.
-이미지는 잠시 후 이어서 전송됩니다."
+            MESSAGE="새 카드뉴스가 올라왔습니다 (${COUNT}장)${NL}${NL}폴더: ${FOLDER}${NL}커밋: ${COMMIT_MESSAGE}${NL}링크: ${COMMIT_URL}${NL}${NL}로컬 PC는 09:15에 자동 git pull 됩니다.${NL}이미지는 잠시 후 이어서 전송됩니다."
           else
-            MESSAGE="repo에 push 됐습니다 (카드뉴스 아님)
-
-커밋: ${COMMIT_MESSAGE}
-작성자: ${COMMIT_AUTHOR}
-링크: ${COMMIT_URL}"
+            MESSAGE="repo에 push 됐습니다 (카드뉴스 아님)${NL}${NL}커밋: ${COMMIT_MESSAGE}${NL}작성자: ${COMMIT_AUTHOR}${NL}링크: ${COMMIT_URL}"
           fi
-          curl -s -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
-            --data-urlencode "chat_id=${TELEGRAM_CHAT_ID}" \
-            --data-urlencode "text=${MESSAGE}"
+          RESP=$(curl -sS -w "\nHTTP_CODE:%{http_code}" -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" --data-urlencode "chat_id=${TELEGRAM_CHAT_ID}" --data-urlencode "text=${MESSAGE}")
+          echo "Telegram response: $RESP"
+          HTTP_CODE=$(echo "$RESP" | tail -1 | sed 's/HTTP_CODE://')
+          if [ "$HTTP_CODE" != "200" ]; then echo "::error::Telegram sendMessage failed with HTTP $HTTP_CODE"; exit 1; fi
 
       - name: Send card images as Telegram album
         if: steps.find.outputs.folder != '' && steps.find.outputs.count != '0'
@@ -65,17 +67,11 @@ jobs:
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
           FOLDER: ${{ steps.find.outputs.folder }}
         run: |
-          set -e
-          # PNG 파일 목록 (정렬해서 card1.png ~ card7.png 순서로)
           mapfile -t PNGS < <(ls "${FOLDER}/png/"*.png | sort)
           TOTAL=${#PNGS[@]}
-          if [ $TOTAL -eq 0 ]; then exit 0; fi
-
-          # sendMediaGroup은 한 번에 최대 10개. 7장은 한 앨범으로 OK
-          # 첫 사진에 caption(앨범 캡션 역할)
-          CAPTION="카드뉴스 ${TOTAL}장 ($(basename "$FOLDER"))"
-
-          # media 배열 JSON 만들기
+          if [ "$TOTAL" -eq 0 ]; then echo "No PNGs found, skipping."; exit 0; fi
+          echo "Sending $TOTAL images..."
+          CAPTION="카드뉴스 ${TOTAL}장"
           MEDIA=""
           for i in "${!PNGS[@]}"; do
             if [ $i -ne 0 ]; then MEDIA="${MEDIA},"; fi
@@ -86,12 +82,13 @@ jobs:
             fi
           done
           MEDIA="[${MEDIA}]"
-
-          # curl 인자 배열로 구성 후 호출
-          CMD=(curl -s -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMediaGroup")
+          CMD=(curl -sS -w "\nHTTP_CODE:%{http_code}" -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMediaGroup")
           CMD+=(-F "chat_id=${TELEGRAM_CHAT_ID}")
           CMD+=(-F "media=${MEDIA}")
           for i in "${!PNGS[@]}"; do
             CMD+=(-F "photo${i}=@${PNGS[$i]}")
           done
-          "${CMD[@]}"
+          RESP=$("${CMD[@]}")
+          echo "Telegram response: $RESP"
+          HTTP_CODE=$(echo "$RESP" | tail -1 | sed 's/HTTP_CODE://')
+          if [ "$HTTP_CODE" != "200" ]; then echo "::error::Telegram sendMediaGroup failed with HTTP $HTTP_CODE"; exit 1; fi

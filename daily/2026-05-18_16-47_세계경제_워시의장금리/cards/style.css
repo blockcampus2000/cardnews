@@ -38,6 +38,19 @@ html, body {
   font-family: 'Pretendard Variable', Pretendard, -apple-system, BlinkMacSystemFont, system-ui, 'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif;
   letter-spacing: -0.02em;
   overflow: hidden;
+  /* 한국어 줄바꿈: 어절(공백) 단위로만 끊고, 단어 한복판에서 끊지 않음 */
+  word-break: keep-all;
+  overflow-wrap: break-word;
+}
+
+/* stat 값(하이라이트 박스 포함)은 줄바꿈 없이 한 줄 유지 */
+.stat__value .num,
+.stat__value .delta {
+  white-space: nowrap;
+}
+.stat__value {
+  flex-wrap: wrap;
+  row-gap: 6px;
 }
 
 .card {

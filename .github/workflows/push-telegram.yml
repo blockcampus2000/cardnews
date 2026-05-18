@@ -25,10 +25,16 @@ jobs:
       - name: Detect new daily folder
         id: find
         run: |
+          # git이 비ASCII(한글) 경로를 escape하지 않도록 설정 (이게 없으면 "daily/..." 로 quoting 됨)
+          git config core.quotepath off
           FOLDER=""
           COUNT=0
           if git rev-parse HEAD~1 >/dev/null 2>&1; then
-            FOLDER=$(git diff --name-only HEAD~1 HEAD | grep -oE '^daily/[^/]+' | sort -u | head -1 || true)
+            DIFF_OUTPUT=$(git diff --name-only HEAD~1 HEAD)
+            echo "--- git diff output ---"
+            echo "$DIFF_OUTPUT"
+            echo "--- end diff ---"
+            FOLDER=$(echo "$DIFF_OUTPUT" | grep -oE '^daily/[^/]+' | sort -u | head -1 || true)
           fi
           if [ -n "$FOLDER" ] && [ -d "$FOLDER/png" ]; then
             COUNT=$(ls "$FOLDER/png/"*.png 2>/dev/null | wc -l || echo 0)

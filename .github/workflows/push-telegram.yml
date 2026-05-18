@@ -8,21 +8,90 @@ jobs:
   notify:
     runs-on: ubuntu-latest
     steps:
-      - name: Send Telegram message
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: Detect new daily folder
+        id: find
+        run: |
+          set -e
+          # 이번 커밋에서 새로 추가/변경된 daily/{folder} 경로 추출
+          FOLDER=$(git diff --name-only HEAD~1 HEAD 2>/dev/null | grep -oE '^daily/[^/]+' | sort -u | head -1 || true)
+          if [ -n "$FOLDER" ] && [ -d "$FOLDER/png" ]; then
+            COUNT=$(ls "$FOLDER/png/"*.png 2>/dev/null | wc -l)
+            echo "folder=$FOLDER" >> $GITHUB_OUTPUT
+            echo "count=$COUNT" >> $GITHUB_OUTPUT
+          else
+            echo "folder=" >> $GITHUB_OUTPUT
+            echo "count=0" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Send text notification
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
           COMMIT_MESSAGE: ${{ github.event.head_commit.message }}
           COMMIT_AUTHOR: ${{ github.event.head_commit.author.name }}
           COMMIT_URL: ${{ github.event.head_commit.url }}
+          FOLDER: ${{ steps.find.outputs.folder }}
+          COUNT: ${{ steps.find.outputs.count }}
         run: |
-          MESSAGE="새 카드뉴스가 main에 push 됐습니다
+          if [ -n "$FOLDER" ]; then
+            MESSAGE="새 카드뉴스가 올라왔습니다 (${COUNT}장)
+
+폴더: ${FOLDER}
+커밋: ${COMMIT_MESSAGE}
+링크: ${COMMIT_URL}
+
+로컬 PC는 09:15에 자동 git pull 됩니다.
+이미지는 잠시 후 이어서 전송됩니다."
+          else
+            MESSAGE="repo에 push 됐습니다 (카드뉴스 아님)
 
 커밋: ${COMMIT_MESSAGE}
 작성자: ${COMMIT_AUTHOR}
-링크: ${COMMIT_URL}
-
-로컬 PC 폴더는 09:15에 자동 git pull 됩니다."
+링크: ${COMMIT_URL}"
+          fi
           curl -s -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
             --data-urlencode "chat_id=${TELEGRAM_CHAT_ID}" \
             --data-urlencode "text=${MESSAGE}"
+
+      - name: Send card images as Telegram album
+        if: steps.find.outputs.folder != '' && steps.find.outputs.count != '0'
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          FOLDER: ${{ steps.find.outputs.folder }}
+        run: |
+          set -e
+          # PNG 파일 목록 (정렬해서 card1.png ~ card7.png 순서로)
+          mapfile -t PNGS < <(ls "${FOLDER}/png/"*.png | sort)
+          TOTAL=${#PNGS[@]}
+          if [ $TOTAL -eq 0 ]; then exit 0; fi
+
+          # sendMediaGroup은 한 번에 최대 10개. 7장은 한 앨범으로 OK
+          # 첫 사진에 caption(앨범 캡션 역할)
+          CAPTION="카드뉴스 ${TOTAL}장 ($(basename "$FOLDER"))"
+
+          # media 배열 JSON 만들기
+          MEDIA=""
+          for i in "${!PNGS[@]}"; do
+            if [ $i -ne 0 ]; then MEDIA="${MEDIA},"; fi
+            if [ $i -eq 0 ]; then
+              MEDIA="${MEDIA}{\"type\":\"photo\",\"media\":\"attach://photo${i}\",\"caption\":\"${CAPTION}\"}"
+            else
+              MEDIA="${MEDIA}{\"type\":\"photo\",\"media\":\"attach://photo${i}\"}"
+            fi
+          done
+          MEDIA="[${MEDIA}]"
+
+          # curl 인자 배열로 구성 후 호출
+          CMD=(curl -s -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMediaGroup")
+          CMD+=(-F "chat_id=${TELEGRAM_CHAT_ID}")
+          CMD+=(-F "media=${MEDIA}")
+          for i in "${!PNGS[@]}"; do
+            CMD+=(-F "photo${i}=@${PNGS[$i]}")
+          done
+          "${CMD[@]}"

@@ -1,0 +1,11 @@
+# 로컬 자동 pull 스크립트와 로그 (사용자 환경에 종속)
+.scripts/
+
+# 파이썬
+__pycache__/
+*.pyc
+
+# 임시 파일
+*.log
+.DS_Store
+Thumbs.db

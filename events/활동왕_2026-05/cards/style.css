@@ -1,0 +1,578 @@
+@import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css');
+
+:root {
+  --bg-dark: #1a1208;
+  --bg-dark-2: #2a1a0e;
+  --bg-dark-3: #3a2614;
+  --text-cream: #f5e9d8;
+  --text-cream-sub: #c9a987;
+  --text-cream-mute: #8a7560;
+  --orange: #ff8c42;
+  --orange-bright: #ff9d52;
+  --orange-deep: #e8732a;
+  --orange-soft: #ffb98a;
+  --gold: #e0b574;
+  --gold-bright: #f0c98b;
+  --gold-deep: #b88a4d;
+  --line-cream: rgba(245, 233, 216, 0.18);
+  --line-gold: rgba(224, 181, 116, 0.35);
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+html, body {
+  width: 1080px;
+  height: 1350px;
+  font-family: 'Pretendard Variable', Pretendard, -apple-system, BlinkMacSystemFont, system-ui, 'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif;
+  letter-spacing: -0.02em;
+  overflow: hidden;
+}
+
+.card {
+  width: 1080px;
+  height: 1350px;
+  position: relative;
+  overflow: hidden;
+  color: var(--text-cream);
+  background:
+    radial-gradient(ellipse at top right, rgba(255, 140, 66, 0.22) 0%, transparent 55%),
+    radial-gradient(ellipse at bottom left, rgba(224, 181, 116, 0.14) 0%, transparent 55%),
+    linear-gradient(180deg, #1a1208 0%, #2a1a0e 50%, #1f1409 100%);
+}
+.card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image:
+    radial-gradient(circle at 20% 30%, rgba(255, 140, 66, 0.06) 0%, transparent 25%),
+    radial-gradient(circle at 80% 70%, rgba(224, 181, 116, 0.05) 0%, transparent 25%);
+  pointer-events: none;
+}
+
+/* ===== Page indicator dots ===== */
+.dots {
+  position: absolute;
+  bottom: 38px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 10px;
+  z-index: 5;
+}
+.dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: rgba(245, 233, 216, 0.22);
+}
+.dot.active {
+  width: 26px;
+  border-radius: 4px;
+  background: var(--gold);
+}
+
+/* ===== Brand ===== */
+.brand {
+  font-weight: 800;
+  font-size: 28px;
+  letter-spacing: 0.02em;
+  color: var(--gold);
+}
+.brand-mark {
+  position: absolute;
+  bottom: 80px;
+  left: 50%;
+  transform: translateX(-50%);
+}
+.brand-mark__logo {
+  font-size: 28px;
+  font-weight: 900;
+  color: var(--gold);
+  letter-spacing: -0.02em;
+}
+
+/* ===== Badge ===== */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 38px;
+  border: 1.5px solid var(--gold);
+  border-radius: 999px;
+  font-weight: 700;
+  font-size: 24px;
+  letter-spacing: 0.22em;
+  color: var(--gold-bright);
+  background: rgba(224, 181, 116, 0.06);
+}
+
+/* ===== Card 1: Cover ===== */
+.cover {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: 80px 80px 110px;
+}
+.cover__top {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 18px;
+}
+.cover__center {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+}
+.cover__label {
+  color: var(--gold);
+  font-size: 24px;
+  font-weight: 700;
+  letter-spacing: 0.45em;
+  margin-bottom: 36px;
+}
+.cover__title {
+  font-size: 188px;
+  font-weight: 900;
+  line-height: 1;
+  letter-spacing: -0.04em;
+  color: var(--text-cream);
+  background: linear-gradient(180deg, #f5e9d8 0%, #e0b574 70%, #b88a4d 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.cover__sub {
+  margin-top: 38px;
+  font-size: 40px;
+  color: var(--text-cream);
+  font-weight: 600;
+  line-height: 1.4;
+  letter-spacing: -0.02em;
+}
+.cover__sub .accent {
+  color: var(--gold-bright);
+  font-weight: 800;
+}
+.cover__period {
+  margin-top: 56px;
+  display: inline-flex;
+  align-items: center;
+  gap: 16px;
+  padding: 18px 40px;
+  border: 1.5px solid var(--line-gold);
+  border-radius: 14px;
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--gold);
+  letter-spacing: 0.05em;
+  background: rgba(224, 181, 116, 0.05);
+}
+.cover__bottom {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* ===== Card 2: Prize ===== */
+.prize {
+  height: 100%;
+  padding: 100px 90px 130px;
+  display: flex;
+  flex-direction: column;
+}
+.prize__head {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 60px;
+  text-align: center;
+}
+.prize__eyebrow {
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--gold);
+  letter-spacing: 0.4em;
+  margin-bottom: 22px;
+}
+.prize__title {
+  font-size: 60px;
+  font-weight: 900;
+  letter-spacing: -0.03em;
+  color: var(--text-cream);
+}
+.prize__title .accent {
+  color: var(--gold-bright);
+}
+.prize__list {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 36px;
+}
+.prize__item {
+  position: relative;
+  border: 2px solid var(--line-gold);
+  border-radius: 28px;
+  padding: 50px 60px;
+  background: linear-gradient(135deg, rgba(224, 181, 116, 0.10) 0%, rgba(255, 140, 66, 0.04) 100%);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 30px;
+}
+.prize__item--gold {
+  border-color: rgba(224, 181, 116, 0.7);
+  background: linear-gradient(135deg, rgba(224, 181, 116, 0.18) 0%, rgba(255, 140, 66, 0.08) 100%);
+  box-shadow: 0 0 60px rgba(224, 181, 116, 0.10) inset;
+}
+.prize__rank {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+}
+.prize__rank-num {
+  font-size: 78px;
+  font-weight: 900;
+  color: var(--gold-bright);
+  letter-spacing: -0.03em;
+  line-height: 1;
+}
+.prize__item--gold .prize__rank-num {
+  background: linear-gradient(180deg, #f0c98b 0%, #b88a4d 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.prize__rank-label {
+  font-size: 30px;
+  font-weight: 700;
+  color: var(--text-cream);
+  letter-spacing: 0.05em;
+}
+.prize__amount {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+}
+.prize__amount .num {
+  font-size: 96px;
+  font-weight: 900;
+  color: var(--text-cream);
+  letter-spacing: -0.04em;
+  line-height: 1;
+}
+.prize__item--gold .prize__amount .num {
+  background: linear-gradient(180deg, #f5e9d8 0%, #e0b574 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.prize__amount .unit {
+  font-size: 38px;
+  font-weight: 800;
+  color: var(--gold);
+  letter-spacing: 0.02em;
+}
+
+/* ===== Card 3: Score breakdown ===== */
+.score {
+  height: 100%;
+  padding: 100px 90px 220px;
+  display: flex;
+  flex-direction: column;
+}
+.score__head {
+  margin-bottom: 36px;
+}
+.score__eyebrow {
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--gold);
+  letter-spacing: 0.4em;
+  margin-bottom: 18px;
+}
+.score__title {
+  font-size: 58px;
+  font-weight: 900;
+  line-height: 1.25;
+  letter-spacing: -0.03em;
+  color: var(--text-cream);
+}
+.score__title .accent {
+  color: var(--gold-bright);
+}
+.score__total {
+  display: inline-block;
+  margin-top: 18px;
+  padding: 8px 20px;
+  border: 1.5px solid var(--line-gold);
+  border-radius: 8px;
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--gold);
+  letter-spacing: 0.04em;
+}
+.score__list {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 22px;
+}
+.score__item {
+  display: flex;
+  align-items: center;
+  gap: 30px;
+  padding: 28px 36px;
+  border: 1.5px solid var(--line-cream);
+  border-radius: 20px;
+  background: rgba(245, 233, 216, 0.03);
+}
+.score__item--top {
+  border-color: var(--line-gold);
+  background: linear-gradient(135deg, rgba(224, 181, 116, 0.12) 0%, rgba(255, 140, 66, 0.05) 100%);
+}
+.score__rank {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 26px;
+  font-weight: 900;
+  color: var(--gold);
+  border: 2px solid var(--gold);
+  flex-shrink: 0;
+}
+.score__item--top .score__rank {
+  background: var(--gold);
+  color: #1a1208;
+}
+.score__label {
+  flex: 1;
+  font-size: 36px;
+  font-weight: 700;
+  color: var(--text-cream);
+  letter-spacing: -0.02em;
+}
+.score__points {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+}
+.score__points .num {
+  font-size: 56px;
+  font-weight: 900;
+  color: var(--gold-bright);
+  letter-spacing: -0.03em;
+  line-height: 1;
+}
+.score__item--top .score__points .num {
+  background: linear-gradient(180deg, #f5e9d8 0%, #e0b574 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.score__points .unit {
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--gold);
+}
+.score__note {
+  margin-top: 28px;
+  font-size: 28px;
+  font-weight: 600;
+  color: var(--text-cream-sub);
+  text-align: center;
+  letter-spacing: -0.01em;
+  line-height: 1.5;
+}
+
+/* ===== Card 4: Period & Rules ===== */
+.rules {
+  height: 100%;
+  padding: 100px 90px 180px;
+  display: flex;
+  flex-direction: column;
+}
+.rules__head {
+  margin-bottom: 36px;
+}
+.rules__eyebrow {
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--gold);
+  letter-spacing: 0.4em;
+  margin-bottom: 18px;
+}
+.rules__title {
+  font-size: 58px;
+  font-weight: 900;
+  line-height: 1.25;
+  letter-spacing: -0.03em;
+  color: var(--text-cream);
+}
+.rules__period {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  padding: 28px 36px;
+  margin-bottom: 30px;
+  border: 1.5px solid var(--line-gold);
+  border-radius: 18px;
+  background: linear-gradient(135deg, rgba(224, 181, 116, 0.10) 0%, rgba(255, 140, 66, 0.04) 100%);
+}
+.rules__period-block {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.rules__period-label {
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--gold);
+  letter-spacing: 0.18em;
+}
+.rules__period-value {
+  font-size: 36px;
+  font-weight: 800;
+  color: var(--text-cream);
+  letter-spacing: -0.01em;
+}
+.rules__period-divider {
+  width: 1.5px;
+  align-self: stretch;
+  background: var(--line-gold);
+}
+.rules__list {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 14px;
+}
+.rules__item {
+  display: flex;
+  gap: 22px;
+  align-items: flex-start;
+  padding: 12px 4px;
+}
+.rules__item-mark {
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  font-weight: 900;
+  color: #1a1208;
+  background: var(--gold);
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+.rules__item-text {
+  font-size: 42px;
+  font-weight: 600;
+  color: var(--text-cream);
+  line-height: 1.4;
+  letter-spacing: -0.02em;
+}
+.rules__item-text .accent {
+  color: var(--gold-bright);
+  font-weight: 800;
+}
+
+/* ===== Card 5: CTA ===== */
+.cta {
+  height: 100%;
+  padding: 110px 80px 110px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+.cta__eyebrow {
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--gold);
+  letter-spacing: 0.45em;
+  margin-bottom: 30px;
+}
+.cta__main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 56px;
+}
+.cta__headline {
+  font-size: 72px;
+  font-weight: 900;
+  line-height: 1.25;
+  letter-spacing: -0.035em;
+  color: var(--text-cream);
+}
+.cta__headline .accent {
+  background: linear-gradient(180deg, #f5e9d8 0%, #e0b574 60%, #b88a4d 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.cta__divider {
+  width: 80px;
+  height: 3px;
+  background: linear-gradient(90deg, transparent 0%, var(--gold) 50%, transparent 100%);
+}
+.cta__message {
+  font-size: 42px;
+  font-weight: 700;
+  line-height: 1.5;
+  letter-spacing: -0.025em;
+  color: var(--text-cream);
+}
+.cta__message .accent {
+  color: var(--gold-bright);
+  font-weight: 800;
+}
+.cta__notice {
+  padding: 32px 50px;
+  border: 2px solid var(--gold);
+  border-radius: 18px;
+  background: linear-gradient(135deg, rgba(224, 181, 116, 0.20) 0%, rgba(255, 140, 66, 0.06) 100%);
+  font-size: 38px;
+  font-weight: 700;
+  color: var(--text-cream);
+  letter-spacing: -0.02em;
+  line-height: 1.5;
+  text-align: center;
+}
+.cta__notice .accent {
+  color: var(--gold-bright);
+  font-weight: 900;
+}
+.cta__promise {
+  font-size: 30px;
+  font-weight: 700;
+  color: var(--text-cream-sub);
+  letter-spacing: -0.01em;
+  line-height: 1.5;
+  text-align: center;
+}
+.cta__promise .accent {
+  color: var(--gold-bright);
+  font-weight: 900;
+}

@@ -25,9 +25,9 @@ def has_video_tag(html_file: Path) -> bool:
 
 async def render_png(page, html_file: Path):
     url = html_file.resolve().as_uri()
-    await page.goto(url, wait_until="networkidle")
+    await page.goto(url, wait_until="load", timeout=60000)
     await page.evaluate("() => document.fonts.ready")
-    await asyncio.sleep(0.4)
+    await asyncio.sleep(0.6)
     out_path = OUT_DIR / (html_file.stem + ".png")
     await page.screenshot(path=str(out_path), omit_background=False)
     print(f"    -> {out_path.relative_to(ROOT)}")
@@ -49,7 +49,7 @@ async def render_mp4(browser, html_file: Path):
     )
     page = await context.new_page()
     url = html_file.resolve().as_uri()
-    await page.goto(url, wait_until="networkidle")
+    await page.goto(url, wait_until="load", timeout=60000)
     await page.evaluate("() => document.fonts.ready")
     await page.evaluate(
         "() => document.querySelectorAll('video').forEach(v => { v.muted = true; v.play(); })"

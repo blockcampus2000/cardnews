@@ -1,4 +1,12 @@
-@import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css');
+/* Pretendard Variable — 로컬 woff2 파일에서 로드 (CDN 의존성 제거) */
+@font-face {
+  font-family: 'Pretendard Variable';
+  font-weight: 45 920;
+  font-style: normal;
+  font-display: block;
+  src: url('../../../fonts/PretendardVariable.woff2') format('woff2-variations'),
+       url('../../../fonts/PretendardVariable.woff2') format('woff2');
+}
 
 :root {
   --bg-dark: #1a1208;

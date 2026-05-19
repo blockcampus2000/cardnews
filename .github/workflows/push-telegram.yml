@@ -73,26 +73,32 @@ jobs:
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
           FOLDER: ${{ steps.find.outputs.folder }}
         run: |
-          mapfile -t PNGS < <(ls "${FOLDER}/png/"*.png | sort)
-          TOTAL=${#PNGS[@]}
-          if [ "$TOTAL" -eq 0 ]; then echo "No PNGs found, skipping."; exit 0; fi
-          echo "Sending $TOTAL images..."
+          # PNG + MP4 모두 수집, 이름순 정렬
+          mapfile -t FILES < <( { ls "${FOLDER}/png/"*.png 2>/dev/null; ls "${FOLDER}/png/"*.mp4 2>/dev/null; } | sort )
+          TOTAL=${#FILES[@]}
+          if [ "$TOTAL" -eq 0 ]; then echo "No media files found, skipping."; exit 0; fi
+          echo "Sending $TOTAL items (mixed PNG + MP4)..."
           CAPTION="카드뉴스 ${TOTAL}장"
+          # Telegram sendMediaGroup: max 10 items, photo/video 혼합 가능
           MEDIA=""
-          for i in "${!PNGS[@]}"; do
+          for i in "${!FILES[@]}"; do
+            F="${FILES[$i]}"
+            EXT="${F##*.}"
+            if [ "$EXT" = "mp4" ]; then TYPE="video"; else TYPE="photo"; fi
             if [ $i -ne 0 ]; then MEDIA="${MEDIA},"; fi
             if [ $i -eq 0 ]; then
-              MEDIA="${MEDIA}{\"type\":\"photo\",\"media\":\"attach://photo${i}\",\"caption\":\"${CAPTION}\"}"
+              MEDIA="${MEDIA}{\"type\":\"${TYPE}\",\"media\":\"attach://media${i}\",\"caption\":\"${CAPTION}\"}"
             else
-              MEDIA="${MEDIA}{\"type\":\"photo\",\"media\":\"attach://photo${i}\"}"
+              MEDIA="${MEDIA}{\"type\":\"${TYPE}\",\"media\":\"attach://media${i}\"}"
             fi
           done
           MEDIA="[${MEDIA}]"
+          echo "Media payload: $MEDIA"
           CMD=(curl -sS -w "\nHTTP_CODE:%{http_code}" -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMediaGroup")
           CMD+=(-F "chat_id=${TELEGRAM_CHAT_ID}")
           CMD+=(-F "media=${MEDIA}")
-          for i in "${!PNGS[@]}"; do
-            CMD+=(-F "photo${i}=@${PNGS[$i]}")
+          for i in "${!FILES[@]}"; do
+            CMD+=(-F "media${i}=@${FILES[$i]}")
           done
           RESP=$("${CMD[@]}")
           echo "Telegram response: $RESP"

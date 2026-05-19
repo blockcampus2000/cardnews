@@ -98,3 +98,66 @@ jobs:
           echo "Telegram response: $RESP"
           HTTP_CODE=$(echo "$RESP" | tail -1 | sed 's/HTTP_CODE://')
           if [ "$HTTP_CODE" != "200" ]; then echo "::error::Telegram sendMediaGroup failed with HTTP $HTTP_CODE"; exit 1; fi
+
+      - name: Send caption text (더보기)
+        if: steps.find.outputs.folder != ''
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          FOLDER: ${{ steps.find.outputs.folder }}
+        run: |
+          # 폴더에서 인스타_더보기*.txt 또는 더보기*.txt 찾기
+          CAPTION_FILE=$(find "${FOLDER}" -maxdepth 1 -name "*더보기*.txt" 2>/dev/null | head -1)
+          if [ -z "$CAPTION_FILE" ] || [ ! -f "$CAPTION_FILE" ]; then
+            echo "No caption file found in $FOLDER, skipping."
+            exit 0
+          fi
+          echo "Caption file: $CAPTION_FILE"
+          # Python으로 분할 전송 (Telegram 4096자 제한)
+          export CAPTION_FILE
+          python3 - <<'PYEOF'
+          import os, sys, urllib.parse, urllib.request
+
+          cap = os.environ['CAPTION_FILE']
+          token = os.environ['TELEGRAM_BOT_TOKEN']
+          chat_id = os.environ['TELEGRAM_CHAT_ID']
+
+          with open(cap, encoding='utf-8') as f:
+              content = f.read().rstrip()
+
+          # 4000자씩 분할 (Telegram 4096자 제한, 여유 96자)
+          chunks = []
+          current = ''
+          for line in content.split('\n'):
+              if len(current) + len(line) + 1 > 4000:
+                  if current:
+                      chunks.append(current)
+                  current = line
+              else:
+                  current = current + '\n' + line if current else line
+          if current:
+              chunks.append(current)
+
+          total = len(chunks)
+          print(f'Sending {total} chunk(s), total {len(content)} chars')
+
+          for i, chunk in enumerate(chunks, 1):
+              prefix = f'더보기 ({i}/{total})\n\n' if total > 1 else '더보기\n\n'
+              text = prefix + chunk
+              data = urllib.parse.urlencode({'chat_id': chat_id, 'text': text}).encode()
+              req = urllib.request.Request(
+                  f'https://api.telegram.org/bot{token}/sendMessage',
+                  data=data, method='POST',
+              )
+              try:
+                  resp = urllib.request.urlopen(req)
+                  body = resp.read().decode()
+                  print(f'Chunk {i}/{total}: HTTP {resp.status}')
+                  if resp.status != 200:
+                      print(f'::error::Chunk {i} failed: {body}')
+                      sys.exit(1)
+              except Exception as e:
+                  print(f'::error::Chunk {i} exception: {e}')
+                  sys.exit(1)
+          print('All chunks sent.')
+          PYEOF

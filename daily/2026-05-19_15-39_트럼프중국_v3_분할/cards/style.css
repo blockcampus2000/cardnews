@@ -367,24 +367,31 @@ html, body {
   margin-bottom: 28px;
 }
 .stat-card__value {
-  font-size: 156px;
+  font-size: 120px;
   font-weight: 900;
   color: var(--text-dark);
   line-height: 1;
   letter-spacing: -0.04em;
-  margin-bottom: 32px;
+  margin-bottom: 18px;
 }
 .stat-card__value .hl {
   background: var(--highlight);
-  padding: 4px 20px;
-  border-radius: 12px;
+  padding: 4px 18px;
+  border-radius: 10px;
   color: var(--orange-deep);
 }
 .stat-card__value .unit {
-  font-size: 64px;
+  font-size: 50px;
   color: var(--text-sub);
   font-weight: 800;
-  margin-left: 8px;
+  margin-left: 6px;
+}
+.stat-card__usd {
+  font-size: 26px;
+  font-weight: 700;
+  color: var(--text-mute);
+  margin-bottom: 24px;
+  letter-spacing: -0.01em;
 }
 .stat-card__sub {
   font-size: 38px;

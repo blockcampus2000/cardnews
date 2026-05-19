@@ -17,6 +17,9 @@ WIDTH = 1080
 HEIGHT = 1350
 SCALE = 2
 VIDEO_SECONDS = 6
+# Playwright 녹화 시작 시점엔 페이지/비디오가 아직 안 그려진 빈 프레임이 잡힘 (0.1~0.5초).
+# 더 길게 녹화한 뒤 ffmpeg로 앞부분 trim해서 깨끗한 6초 출력.
+SKIP_HEAD_SECONDS = 1.5
 
 
 def has_video_tag(html_file: Path) -> bool:
@@ -54,7 +57,8 @@ async def render_mp4(browser, html_file: Path):
     await page.evaluate(
         "() => document.querySelectorAll('video').forEach(v => { v.muted = true; v.play(); })"
     )
-    await asyncio.sleep(VIDEO_SECONDS)
+    # SKIP_HEAD_SECONDS만큼 추가로 녹화해 두면 ffmpeg가 앞부분 trim 가능
+    await asyncio.sleep(VIDEO_SECONDS + SKIP_HEAD_SECONDS)
     await page.close()
     await context.close()
 
@@ -66,6 +70,7 @@ async def render_mp4(browser, html_file: Path):
 
     cmd = [
         "ffmpeg", "-y", "-loglevel", "error",
+        "-ss", str(SKIP_HEAD_SECONDS),  # 빈 프레임 구간 trim
         "-i", str(webm),
         "-c:v", "libx264", "-preset", "medium", "-crf", "23",
         "-pix_fmt", "yuv420p",

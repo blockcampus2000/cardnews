@@ -1,22 +1,38 @@
 <!doctype html>
 <html lang="ko"><head><meta charset="utf-8"/><title>2/10</title><link rel="stylesheet" href="style.css"/></head>
 <body>
-<div class="card card--stat">
+<div class="card card--dashboard">
   <div class="hero">
     <video src="../videos/stat1.mp4" autoplay muted loop playsinline></video>
     <div class="hero__overlay"></div>
-    <div class="hero__chip">#01 성장률</div>
+    <div class="hero__chip">한눈에 보기</div>
     <div class="hero__handle">@이진트</div>
-    <div class="hero__source"><span class="dot"></span>유엔 DESA · 5월 19일</div>
+    <div class="hero__source"><span class="dot"></span>유엔 WESP 중간 업데이트 · 5월 19일</div>
   </div>
   <div class="content">
-    <div class="stat-card__label">2026 세계 GDP 전망 (유엔 보고서)</div>
-    <div class="stat-card__value"><span class="hl">+2.5%</span></div>
-    <div class="stat-card__sub">1월 예측 대비 0.2%p 하향 조정</div>
-    <div class="stat-card__note">2027년 회복 전망은 <strong>+2.8%</strong>,<br/>
-    악화 시나리오 시 <strong>+2.1%</strong>로,<br/>
-    이는 코로나·금융위기를 제외하면<br/>
-    <strong>금세기 최저 수준</strong>으로 집계됐다.</div>
+    <div class="dash__title">4개 핵심 수치 <span class="hl">한눈에</span></div>
+    <div class="dash-grid">
+      <div class="dash-cell">
+        <div class="dash-cell__label">2026 세계 GDP</div>
+        <div class="dash-cell__value">+2.5%</div>
+        <div class="dash-cell__delta">1월 대비 −0.2%p ↓</div>
+      </div>
+      <div class="dash-cell">
+        <div class="dash-cell__label">서아시아 성장률</div>
+        <div class="dash-cell__value">+1.4%</div>
+        <div class="dash-cell__delta">2025 3.6% → 2026 1.4%</div>
+      </div>
+      <div class="dash-cell">
+        <div class="dash-cell__label">개도국 인플레이션</div>
+        <div class="dash-cell__value">+5.2%</div>
+        <div class="dash-cell__delta">2025 4.2% → 2026 5.2%</div>
+      </div>
+      <div class="dash-cell">
+        <div class="dash-cell__label">악화 시나리오</div>
+        <div class="dash-cell__value">+2.1%</div>
+        <div class="dash-cell__delta">금세기 최저 수준</div>
+      </div>
+    </div>
   </div>
   <div class="dots dots--bright"><span class="dot"></span><span class="dot active"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span></div>
 </div></body></html>

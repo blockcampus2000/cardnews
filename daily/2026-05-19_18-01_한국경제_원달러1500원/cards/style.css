@@ -118,7 +118,7 @@ html, body {
 /* ===== Content (bottom text panel) ===== */
 .content {
   flex: 1;
-  padding: 60px 80px 80px;
+  padding: 50px 80px 110px;
   display: flex;
   flex-direction: column;
   color: var(--text-dark);
@@ -131,25 +131,25 @@ html, body {
   margin-bottom: 20px;
 }
 .content__title {
-  font-size: 60px;
+  font-size: 56px;
   font-weight: 900;
-  line-height: 1.25;
+  line-height: 1.22;
   letter-spacing: -0.03em;
   color: var(--text-dark);
-  margin-bottom: 32px;
+  margin-bottom: 24px;
 }
 .content__title .hl {
   color: var(--orange-deep);
 }
 .content__body {
   flex: 1;
-  font-size: 30px;
+  font-size: 28px;
   font-weight: 500;
-  line-height: 1.55;
+  line-height: 1.45;
   color: var(--text-dark);
 }
 .content__body p {
-  margin-bottom: 16px;
+  margin-bottom: 12px;
 }
 .content__body strong,
 .content__body .hl {
@@ -318,7 +318,7 @@ html, body {
 /* ===== Page indicator dots ===== */
 .dots {
   position: absolute;
-  bottom: 28px;
+  bottom: 40px;
   left: 50%;
   transform: translateX(-50%);
   display: flex;
@@ -345,7 +345,7 @@ html, body {
 }
 
 /* Hero heights per card type */
-.card--content .hero { height: 540px; }  /* 40% */
+.card--content .hero { height: 500px; }
 .card--summary .hero { height: 380px; }  /* smaller hero for summary */
 .card--stat .hero { height: 540px; }
 

@@ -66,44 +66,59 @@ jobs:
           HTTP_CODE=$(echo "$RESP" | tail -1 | sed 's/HTTP_CODE://')
           if [ "$HTTP_CODE" != "200" ]; then echo "::error::Telegram sendMessage failed with HTTP $HTTP_CODE"; exit 1; fi
 
-      - name: Send card images as Telegram album
+      - name: Send card media (album of photos, then individual videos)
         if: steps.find.outputs.folder != '' && steps.find.outputs.count != '0'
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
           FOLDER: ${{ steps.find.outputs.folder }}
         run: |
-          # PNG + MP4 모두 수집, 이름순 정렬
-          mapfile -t FILES < <( { ls "${FOLDER}/png/"*.png 2>/dev/null; ls "${FOLDER}/png/"*.mp4 2>/dev/null; } | sort )
-          TOTAL=${#FILES[@]}
-          if [ "$TOTAL" -eq 0 ]; then echo "No media files found, skipping."; exit 0; fi
-          echo "Sending $TOTAL items (mixed PNG + MP4)..."
-          CAPTION="카드뉴스 ${TOTAL}장"
-          # Telegram sendMediaGroup: max 10 items, photo/video 혼합 가능
-          MEDIA=""
-          for i in "${!FILES[@]}"; do
-            F="${FILES[$i]}"
-            EXT="${F##*.}"
-            if [ "$EXT" = "mp4" ]; then TYPE="video"; else TYPE="photo"; fi
-            if [ $i -ne 0 ]; then MEDIA="${MEDIA},"; fi
-            if [ $i -eq 0 ]; then
-              MEDIA="${MEDIA}{\"type\":\"${TYPE}\",\"media\":\"attach://media${i}\",\"caption\":\"${CAPTION}\"}"
-            else
-              MEDIA="${MEDIA}{\"type\":\"${TYPE}\",\"media\":\"attach://media${i}\"}"
-            fi
+          # PNG는 album으로, MP4는 개별 sendVideo로 보내야 텔레그램이 supports_streaming 비디오로 안정 표시
+          mapfile -t PNGS < <(ls "${FOLDER}/png/"*.png 2>/dev/null | sort)
+          mapfile -t MP4S < <(ls "${FOLDER}/png/"*.mp4 2>/dev/null | sort)
+          echo "PNGs: ${#PNGS[@]}, MP4s: ${#MP4S[@]}"
+
+          # 1. PNG album
+          if [ "${#PNGS[@]}" -gt 0 ]; then
+            CAPTION="카드뉴스 PNG ${#PNGS[@]}장"
+            MEDIA=""
+            for i in "${!PNGS[@]}"; do
+              if [ $i -ne 0 ]; then MEDIA="${MEDIA},"; fi
+              if [ $i -eq 0 ]; then
+                MEDIA="${MEDIA}{\"type\":\"photo\",\"media\":\"attach://media${i}\",\"caption\":\"${CAPTION}\"}"
+              else
+                MEDIA="${MEDIA}{\"type\":\"photo\",\"media\":\"attach://media${i}\"}"
+              fi
+            done
+            MEDIA="[${MEDIA}]"
+            CMD=(curl -sS -w "\nHTTP_CODE:%{http_code}" -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMediaGroup")
+            CMD+=(-F "chat_id=${TELEGRAM_CHAT_ID}")
+            CMD+=(-F "media=${MEDIA}")
+            for i in "${!PNGS[@]}"; do CMD+=(-F "media${i}=@${PNGS[$i]}"); done
+            RESP=$("${CMD[@]}")
+            echo "PNG album response: $RESP"
+            HTTP_CODE=$(echo "$RESP" | tail -1 | sed 's/HTTP_CODE://')
+            if [ "$HTTP_CODE" != "200" ]; then echo "::error::PNG album failed HTTP $HTTP_CODE"; exit 1; fi
+          fi
+
+          # 2. MP4 개별 전송 (sendVideo + supports_streaming)
+          for i in "${!MP4S[@]}"; do
+            F="${MP4S[$i]}"
+            NAME=$(basename "$F" .mp4)
+            echo "Sending video: $F"
+            RESP=$(curl -sS -w "\nHTTP_CODE:%{http_code}" -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendVideo" \
+              -F "chat_id=${TELEGRAM_CHAT_ID}" \
+              -F "video=@${F}" \
+              -F "supports_streaming=true" \
+              -F "width=1080" \
+              -F "height=1350" \
+              -F "duration=6" \
+              -F "caption=${NAME}")
+            echo "Video $NAME response: $RESP"
+            HTTP_CODE=$(echo "$RESP" | tail -1 | sed 's/HTTP_CODE://')
+            if [ "$HTTP_CODE" != "200" ]; then echo "::warning::sendVideo $NAME failed HTTP $HTTP_CODE"; fi
+            sleep 1
           done
-          MEDIA="[${MEDIA}]"
-          echo "Media payload: $MEDIA"
-          CMD=(curl -sS -w "\nHTTP_CODE:%{http_code}" -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMediaGroup")
-          CMD+=(-F "chat_id=${TELEGRAM_CHAT_ID}")
-          CMD+=(-F "media=${MEDIA}")
-          for i in "${!FILES[@]}"; do
-            CMD+=(-F "media${i}=@${FILES[$i]}")
-          done
-          RESP=$("${CMD[@]}")
-          echo "Telegram response: $RESP"
-          HTTP_CODE=$(echo "$RESP" | tail -1 | sed 's/HTTP_CODE://')
-          if [ "$HTTP_CODE" != "200" ]; then echo "::error::Telegram sendMediaGroup failed with HTTP $HTTP_CODE"; exit 1; fi
 
       - name: Send caption text (더보기)
         if: steps.find.outputs.folder != ''

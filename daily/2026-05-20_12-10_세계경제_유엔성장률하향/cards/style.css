@@ -166,6 +166,14 @@ html, body {
 /* ===== Cover variant (card 1) — image fills more, title overlays ===== */
 .card--cover .hero { height: 100%; }
 .card--cover .content { display: none; }
+/* 밝은 영상에도 흰 텍스트 가독성 확보 — overlay 강화 */
+.card--cover .hero__overlay {
+  background: linear-gradient(180deg,
+    rgba(0,0,0,0.45) 0%,
+    rgba(0,0,0,0.55) 30%,
+    rgba(0,0,0,0.65) 65%,
+    rgba(0,0,0,0.7) 100%);
+}
 .card--cover .cover-stack {
   position: absolute;
   inset: 0;
@@ -173,6 +181,20 @@ html, body {
   display: flex;
   flex-direction: column;
   padding: 60px 70px 90px;
+}
+/* 가운데 텍스트 영역에 라디얼 어둠 추가로 영상이 밝아도 잘 보이도록 */
+.card--cover .cover-stack__center {
+  position: relative;
+}
+.card--cover .cover-stack__center::before {
+  content: '';
+  position: absolute;
+  inset: -60px -80px;
+  background: radial-gradient(ellipse at center,
+    rgba(0,0,0,0.55) 0%,
+    rgba(0,0,0,0.30) 55%,
+    transparent 100%);
+  z-index: -1;
 }
 .card--cover .cover-stack__top {
   display: flex;
@@ -207,7 +229,7 @@ html, body {
   font-weight: 700;
   letter-spacing: 0.04em;
   margin-bottom: 28px;
-  text-shadow: 0 2px 12px rgba(0,0,0,0.6);
+  text-shadow: 0 2px 8px rgba(0,0,0,0.95), 0 0 4px rgba(0,0,0,0.85);
 }
 .card--cover .cover-title {
   color: #fff;
@@ -215,7 +237,7 @@ html, body {
   font-weight: 900;
   line-height: 1.2;
   letter-spacing: -0.035em;
-  text-shadow: 0 4px 16px rgba(0,0,0,0.55);
+  text-shadow: 0 3px 14px rgba(0,0,0,0.95), 0 0 6px rgba(0,0,0,0.9), 0 1px 3px rgba(0,0,0,0.85);
 }
 .card--cover .cover-title .hl {
   color: var(--orange-light);

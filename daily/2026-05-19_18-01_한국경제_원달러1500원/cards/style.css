@@ -722,3 +722,87 @@ html, body {
   letter-spacing: -0.02em; line-height: 1.2;
 }
 .takeaway-pillar__main strong { color: var(--orange-deep); }
+
+/* ============================================================
+   글 카드에 추가하는 작은 시각요소들 (AI 글자 제다 느낌 제거용)
+   ============================================================ */
+
+/* 본문 카드 상단의 미니 인포 박스 (예: 발표일·출처 강조) */
+.content__infobar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: rgba(255,140,40,0.12);
+  border-left: 4px solid var(--orange);
+  padding: 14px 18px;
+  border-radius: 10px;
+  margin-bottom: 16px;
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--text-dark);
+}
+.content__infobar .badge {
+  background: var(--orange-deep);
+  color: #fff;
+  padding: 3px 12px;
+  border-radius: 999px;
+  font-size: 18px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  flex-shrink: 0;
+}
+
+/* 본문 끝에 들어가는 칩(태그) 라인 (예: 3개 충격원 강조) */
+.content__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 14px;
+  margin-bottom: 6px;
+}
+.content__chips .chip {
+  background: #fff;
+  border: 1.5px solid var(--orange);
+  color: var(--orange-deep);
+  padding: 8px 16px;
+  border-radius: 999px;
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+}
+
+/* 본문에 들어가는 미니 3박스 (예: 영향 채널 3개) */
+.mini-pillars {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 10px;
+  margin-top: 14px;
+}
+.mini-pillar {
+  background: #fff;
+  border: 1.5px solid rgba(255,140,40,0.3);
+  border-radius: 12px;
+  padding: 14px 12px;
+  text-align: center;
+}
+.mini-pillar__icon {
+  font-size: 32px;
+  font-weight: 900;
+  color: var(--orange-deep);
+  line-height: 1;
+  margin-bottom: 6px;
+}
+.mini-pillar__label {
+  font-size: 19px;
+  font-weight: 800;
+  color: var(--text-dark);
+  letter-spacing: -0.01em;
+  line-height: 1.25;
+}
+.mini-pillar__sub {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-mute);
+  margin-top: 3px;
+  letter-spacing: -0.01em;
+}

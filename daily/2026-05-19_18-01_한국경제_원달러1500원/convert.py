@@ -17,9 +17,9 @@ WIDTH = 1080
 HEIGHT = 1350
 SCALE = 2
 VIDEO_SECONDS = 6
-# Playwright 녹화 시작 시점엔 페이지/비디오가 아직 안 그려진 빈 프레임이 잡힘 (0.1~0.5초).
-# 더 길게 녹화한 뒤 ffmpeg로 앞부분 trim해서 깨끗한 6초 출력.
-SKIP_HEAD_SECONDS = 1.5
+# Playwright 녹화 시작 시점엔 페이지/비디오가 아직 안 그려진 빈 프레임이 잡힘 (~0.1초).
+# 살짝 더 녹화한 뒤 ffmpeg로 앞부분만 trim해서 깨끗한 6초 출력.
+SKIP_HEAD_SECONDS = 0.3
 
 
 def has_video_tag(html_file: Path) -> bool:

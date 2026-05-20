@@ -87,9 +87,17 @@ async def render_mp4(browser, html_file: Path):
     print(f"    -> {out_mp4.relative_to(ROOT)} (video, {VIDEO_SECONDS}s)")
 
 
+def natural_key(p: Path):
+    """card1.html, card2.html, ..., card10.html 자연 정렬용 키"""
+    import re
+    m = re.search(r"(\d+)", p.stem)
+    return int(m.group(1)) if m else 0
+
+
 async def main():
     OUT_DIR.mkdir(exist_ok=True)
-    cards = sorted(CARDS_DIR.glob("card*.html"))
+    # 자연 정렬: card1 → card2 → ... → card10 (알파벳 정렬은 card10이 card2 앞으로 옴)
+    cards = sorted(CARDS_DIR.glob("card*.html"), key=natural_key)
     if not cards:
         print(f"[!] No card*.html in {CARDS_DIR}")
         sys.exit(1)
@@ -98,20 +106,13 @@ async def main():
         browser = await p.chromium.launch(
             args=["--autoplay-policy=no-user-gesture-required"]
         )
-        png_context = await browser.new_context(
-            viewport={"width": WIDTH, "height": HEIGHT},
-            device_scale_factor=SCALE,
-        )
-        png_page = await png_context.new_page()
 
+        # 모든 카드를 MP4로 출력 — 텔레그램 album type 통일 + 순서 보장
+        # video 태그 없는 카드도 6초 정적 영상으로
         for html_file in cards:
             print(f"[*] {html_file.name}")
-            if has_video_tag(html_file):
-                await render_mp4(browser, html_file)
-            else:
-                await render_png(png_page, html_file)
+            await render_mp4(browser, html_file)
 
-        await png_context.close()
         tmp_dir = OUT_DIR / "_tmp_video"
         if tmp_dir.exists():
             for f in tmp_dir.iterdir():

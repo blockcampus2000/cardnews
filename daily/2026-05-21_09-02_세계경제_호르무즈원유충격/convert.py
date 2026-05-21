@@ -54,24 +54,17 @@ async def render_mp4(browser, html_file: Path):
     url = html_file.resolve().as_uri()
     await page.goto(url, wait_until="load", timeout=60000)
     await page.evaluate("() => document.fonts.ready")
-    # video.readyState >= 3 (HAVE_FUTURE_DATA) 까지 기다린 후 재생.
+    # 모든 video가 readyState>=3 될 때까지 대기 (5초 타임아웃)
     # 클라우드 라우틴 환경에서 영상이 hero에 안 들어가던 문제 해결.
+    try:
+        await page.wait_for_function(
+            "() => { const vs = document.querySelectorAll('video'); return vs.length === 0 || Array.from(vs).every(v => v.readyState >= 3); }",
+            timeout=5000,
+        )
+    except Exception:
+        pass  # 타임아웃이어도 일단 진행
     await page.evaluate(
-        """async () => {
-          const vids = Array.from(document.querySelectorAll('video'));
-          if (vids.length === 0) return;
-          await Promise.all(vids.map(v => new Promise(resolve => {
-            v.muted = true;
-            v.playsInline = true;
-            const start = () => { v.play().catch(()=>{}); resolve(); };
-            if (v.readyState >= 3) start();
-            else {
-              v.addEventListener('canplay', start, { once: true });
-              v.addEventListener('error', () => resolve(), { once: true });
-              setTimeout(resolve, 5000);
-            }
-          }));
-        }"""
+        "() => document.querySelectorAll('video').forEach(v => { v.muted = true; v.playsInline = true; v.play().catch(()=>{}); })"
     )
     # SKIP_HEAD_SECONDS만큼 추가로 녹화해 두면 ffmpeg가 앞부분 trim 가능
     await asyncio.sleep(VIDEO_SECONDS + SKIP_HEAD_SECONDS)

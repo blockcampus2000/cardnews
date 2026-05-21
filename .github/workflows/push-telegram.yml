@@ -79,23 +79,24 @@ jobs:
           TOTAL=${#FILES[@]}
           if [ "$TOTAL" -eq 0 ]; then echo "No mp4 files found, skipping."; exit 0; fi
           echo "Concatenating $TOTAL videos into one..."
-          # ffmpeg concat demuxer용 리스트 파일
-          CONCAT_DIR="${FOLDER}/png"
-          CONCAT_LIST="${CONCAT_DIR}/_concat.txt"
-          : > "$CONCAT_LIST"
-          for F in "${FILES[@]}"; do
-            echo "file '$(basename "$F")'" >> "$CONCAT_LIST"
-          done
-          cat "$CONCAT_LIST"
-          OUT_MP4="${CONCAT_DIR}/_all.mp4"
-          # codec 같으면 -c copy 빠름. 다르면 fail 가능성 → 재인코딩 fallback
-          if ! ffmpeg -y -loglevel error -f concat -safe 0 -i "$CONCAT_LIST" -c copy "$OUT_MP4"; then
-            echo "concat -c copy failed, re-encoding..."
-            ffmpeg -y -loglevel error -f concat -safe 0 -i "$CONCAT_LIST" \
-              -c:v libx264 -preset fast -crf 23 -pix_fmt yuv420p -vf "scale=1080:1350" \
-              -an "$OUT_MP4"
+          # cwd를 png 디렉토리로 옮겨서 상대 경로 단순화 (ffmpeg concat이 한글 경로 안전)
+          pushd "${FOLDER}/png" > /dev/null
+          ls *.mp4 | sort -V | sed "s/.*/file '&'/" > _concat.txt
+          echo "--- concat list ---"
+          cat _concat.txt
+          echo "--- end ---"
+          # -c copy 생략하고 항상 재인코딩 (codec 일관성 보장)
+          ffmpeg -y -loglevel error -f concat -safe 0 -i _concat.txt \
+            -c:v libx264 -preset fast -crf 23 -pix_fmt yuv420p -vf "scale=1080:1350" \
+            -an -movflags +faststart _all.mp4 2>&1 | tail -20
+          FFMPEG_EXIT=${PIPESTATUS[0]}
+          popd > /dev/null
+          if [ "$FFMPEG_EXIT" != "0" ]; then
+            echo "::error::ffmpeg concat failed (exit $FFMPEG_EXIT)"
+            exit 1
           fi
-          SIZE=$(stat -c%s "$OUT_MP4")
+          OUT_MP4="${FOLDER}/png/_all.mp4"
+          SIZE=$(stat -c%s "$OUT_MP4" 2>/dev/null || echo 0)
           DURATION=$((TOTAL * 6))
           echo "Combined video: ${SIZE} bytes, ${DURATION}s"
           if [ "$SIZE" -lt 100000 ]; then
@@ -118,7 +119,7 @@ jobs:
           BODY=$(echo "$RESP" | sed '$d')
           echo "HTTP $HTTP_CODE | $(echo "$BODY" | head -c 300)"
           # 정리
-          rm -f "$CONCAT_LIST" "$OUT_MP4"
+          rm -f "${FOLDER}/png/_concat.txt" "$OUT_MP4"
           if [ "$HTTP_CODE" != "200" ]; then echo "::error::sendVideo combined failed HTTP $HTTP_CODE"; exit 1; fi
           echo "Combined video sent successfully."
 

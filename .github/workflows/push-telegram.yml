@@ -66,46 +66,61 @@ jobs:
           HTTP_CODE=$(echo "$RESP" | tail -1 | sed 's/HTTP_CODE://')
           if [ "$HTTP_CODE" != "200" ]; then echo "::error::Telegram sendMessage failed with HTTP $HTTP_CODE"; exit 1; fi
 
-      - name: Send card videos (개별 sendVideo, 첫 번째만 알림)
+      - name: Concat all card videos into one + sendVideo (묶음 1개 영상)
         if: steps.find.outputs.folder != '' && steps.find.outputs.count != '0'
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
           FOLDER: ${{ steps.find.outputs.folder }}
         run: |
-          # sendMediaGroup이 silently fail해서 클라이언트에 표시 안 됨 (200 응답 받아도 안 보임)
-          # 해결: sendVideo 개별 호출 + disable_notification=true로 알림 1번만 가게
+          # 사용자 요청: 영상을 묶음으로 (개별 알림 폭탄 방지 + sendMediaGroup silently fail 우회)
+          # 10개 mp4 → ffmpeg concat → 1개 60초 영상 → sendVideo 1번 → 알림 1번 + 묶음
           mapfile -t FILES < <(ls "${FOLDER}/png/"*.mp4 2>/dev/null | sort -V)
           TOTAL=${#FILES[@]}
           if [ "$TOTAL" -eq 0 ]; then echo "No mp4 files found, skipping."; exit 0; fi
-          echo "Sending $TOTAL videos individually (first with notification, rest silent)..."
-          for i in "${!FILES[@]}"; do
-            F="${FILES[$i]}"
-            NAME=$(basename "$F" .mp4)
-            POS=$((i+1))
-            # 첫 번째만 알림 켬, 나머지는 disable_notification=true (조용히)
-            if [ $i -eq 0 ]; then
-              DISABLE_NOTIF="false"
-              CAPTION="카드뉴스 ${TOTAL}장 (${POS}/${TOTAL}부터 ${TOTAL}까지)"
-            else
-              DISABLE_NOTIF="true"
-              CAPTION="${POS}/${TOTAL}"
-            fi
-            echo "  [${POS}/${TOTAL}] $NAME (notify=$DISABLE_NOTIF inverted)"
-            RESP=$(curl -sS -w "\nHTTP_CODE:%{http_code}" -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendVideo" \
-              -F "chat_id=${TELEGRAM_CHAT_ID}" \
-              -F "video=@${F}" \
-              -F "supports_streaming=true" \
-              -F "width=1080" -F "height=1350" -F "duration=6" \
-              -F "disable_notification=${DISABLE_NOTIF}" \
-              -F "caption=${CAPTION}")
-            HTTP_CODE=$(echo "$RESP" | tail -1 | sed 's/HTTP_CODE://')
-            BODY=$(echo "$RESP" | sed '$d')
-            echo "    HTTP $HTTP_CODE | resp: $(echo "$BODY" | head -c 200)"
-            if [ "$HTTP_CODE" != "200" ]; then echo "::warning::sendVideo $NAME failed HTTP $HTTP_CODE"; fi
-            sleep 1
+          echo "Concatenating $TOTAL videos into one..."
+          # ffmpeg concat demuxer용 리스트 파일
+          CONCAT_DIR="${FOLDER}/png"
+          CONCAT_LIST="${CONCAT_DIR}/_concat.txt"
+          : > "$CONCAT_LIST"
+          for F in "${FILES[@]}"; do
+            echo "file '$(basename "$F")'" >> "$CONCAT_LIST"
           done
-          echo "All videos sent."
+          cat "$CONCAT_LIST"
+          OUT_MP4="${CONCAT_DIR}/_all.mp4"
+          # codec 같으면 -c copy 빠름. 다르면 fail 가능성 → 재인코딩 fallback
+          if ! ffmpeg -y -loglevel error -f concat -safe 0 -i "$CONCAT_LIST" -c copy "$OUT_MP4"; then
+            echo "concat -c copy failed, re-encoding..."
+            ffmpeg -y -loglevel error -f concat -safe 0 -i "$CONCAT_LIST" \
+              -c:v libx264 -preset fast -crf 23 -pix_fmt yuv420p -vf "scale=1080:1350" \
+              -an "$OUT_MP4"
+          fi
+          SIZE=$(stat -c%s "$OUT_MP4")
+          DURATION=$((TOTAL * 6))
+          echo "Combined video: ${SIZE} bytes, ${DURATION}s"
+          if [ "$SIZE" -lt 100000 ]; then
+            echo "::error::concat output too small ($SIZE bytes)"
+            exit 1
+          fi
+          if [ "$SIZE" -gt 49000000 ]; then
+            echo "::warning::combined video > 49MB ($SIZE), telegram may reject (bot 50MB limit)"
+          fi
+          # sendVideo 1번 → 알림 1번 + 묶음 형태로 카드 10장 60초 영상
+          CAPTION="카드뉴스 ${TOTAL}장 (총 ${DURATION}초, 카드별 6초씩)"
+          echo "Sending combined video to telegram..."
+          RESP=$(curl -sS -w "\nHTTP_CODE:%{http_code}" -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendVideo" \
+            -F "chat_id=${TELEGRAM_CHAT_ID}" \
+            -F "video=@${OUT_MP4}" \
+            -F "supports_streaming=true" \
+            -F "width=1080" -F "height=1350" -F "duration=${DURATION}" \
+            -F "caption=${CAPTION}")
+          HTTP_CODE=$(echo "$RESP" | tail -1 | sed 's/HTTP_CODE://')
+          BODY=$(echo "$RESP" | sed '$d')
+          echo "HTTP $HTTP_CODE | $(echo "$BODY" | head -c 300)"
+          # 정리
+          rm -f "$CONCAT_LIST" "$OUT_MP4"
+          if [ "$HTTP_CODE" != "200" ]; then echo "::error::sendVideo combined failed HTTP $HTTP_CODE"; exit 1; fi
+          echo "Combined video sent successfully."
 
       - name: Send caption text (더보기)
         if: steps.find.outputs.folder != ''

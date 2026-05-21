@@ -66,45 +66,46 @@ jobs:
           HTTP_CODE=$(echo "$RESP" | tail -1 | sed 's/HTTP_CODE://')
           if [ "$HTTP_CODE" != "200" ]; then echo "::error::Telegram sendMessage failed with HTTP $HTTP_CODE"; exit 1; fi
 
-      - name: Send card videos as single album (순서 보장)
+      - name: Send card videos (개별 sendVideo, 첫 번째만 알림)
         if: steps.find.outputs.folder != '' && steps.find.outputs.count != '0'
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
           FOLDER: ${{ steps.find.outputs.folder }}
         run: |
-          # 모든 카드가 MP4 — album type 통일 + sort -V 자연정렬로 card1→card10 순서 보장
-          # mixed photo+video는 텔레그램이 그리드 layout으로 재정렬해 순서가 깨짐
+          # sendMediaGroup이 silently fail해서 클라이언트에 표시 안 됨 (200 응답 받아도 안 보임)
+          # 해결: sendVideo 개별 호출 + disable_notification=true로 알림 1번만 가게
           mapfile -t FILES < <(ls "${FOLDER}/png/"*.mp4 2>/dev/null | sort -V)
           TOTAL=${#FILES[@]}
           if [ "$TOTAL" -eq 0 ]; then echo "No mp4 files found, skipping."; exit 0; fi
-          if [ "$TOTAL" -gt 10 ]; then
-            echo "::warning::media count $TOTAL > 10, truncating to first 10"
-            FILES=("${FILES[@]:0:10}")
-            TOTAL=10
-          fi
-          echo "Sending album in order:"
-          for F in "${FILES[@]}"; do echo "  - $F"; done
-          CAPTION="카드뉴스 ${TOTAL}장 (순서대로)"
-          MEDIA=""
+          echo "Sending $TOTAL videos individually (first with notification, rest silent)..."
           for i in "${!FILES[@]}"; do
-            if [ $i -ne 0 ]; then MEDIA="${MEDIA},"; fi
+            F="${FILES[$i]}"
+            NAME=$(basename "$F" .mp4)
+            POS=$((i+1))
+            # 첫 번째만 알림 켬, 나머지는 disable_notification=true (조용히)
             if [ $i -eq 0 ]; then
-              MEDIA="${MEDIA}{\"type\":\"video\",\"media\":\"attach://media${i}\",\"caption\":\"${CAPTION}\",\"width\":1080,\"height\":1350,\"duration\":6,\"supports_streaming\":true}"
+              DISABLE_NOTIF="false"
+              CAPTION="카드뉴스 ${TOTAL}장 (${POS}/${TOTAL}부터 ${TOTAL}까지)"
             else
-              MEDIA="${MEDIA}{\"type\":\"video\",\"media\":\"attach://media${i}\",\"width\":1080,\"height\":1350,\"duration\":6,\"supports_streaming\":true}"
+              DISABLE_NOTIF="true"
+              CAPTION="${POS}/${TOTAL}"
             fi
+            echo "  [${POS}/${TOTAL}] $NAME (notify=$DISABLE_NOTIF inverted)"
+            RESP=$(curl -sS -w "\nHTTP_CODE:%{http_code}" -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendVideo" \
+              -F "chat_id=${TELEGRAM_CHAT_ID}" \
+              -F "video=@${F}" \
+              -F "supports_streaming=true" \
+              -F "width=1080" -F "height=1350" -F "duration=6" \
+              -F "disable_notification=${DISABLE_NOTIF}" \
+              -F "caption=${CAPTION}")
+            HTTP_CODE=$(echo "$RESP" | tail -1 | sed 's/HTTP_CODE://')
+            BODY=$(echo "$RESP" | sed '$d')
+            echo "    HTTP $HTTP_CODE | resp: $(echo "$BODY" | head -c 200)"
+            if [ "$HTTP_CODE" != "200" ]; then echo "::warning::sendVideo $NAME failed HTTP $HTTP_CODE"; fi
+            sleep 1
           done
-          MEDIA="[${MEDIA}]"
-          echo "Media payload: $MEDIA"
-          CMD=(curl -sS -w "\nHTTP_CODE:%{http_code}" -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMediaGroup")
-          CMD+=(-F "chat_id=${TELEGRAM_CHAT_ID}")
-          CMD+=(-F "media=${MEDIA}")
-          for i in "${!FILES[@]}"; do CMD+=(-F "media${i}=@${FILES[$i]}"); done
-          RESP=$("${CMD[@]}")
-          echo "Telegram response: $RESP"
-          HTTP_CODE=$(echo "$RESP" | tail -1 | sed 's/HTTP_CODE://')
-          if [ "$HTTP_CODE" != "200" ]; then echo "::error::sendMediaGroup failed HTTP $HTTP_CODE"; exit 1; fi
+          echo "All videos sent."
 
       - name: Send caption text (더보기)
         if: steps.find.outputs.folder != ''

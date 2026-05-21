@@ -54,8 +54,24 @@ async def render_mp4(browser, html_file: Path):
     url = html_file.resolve().as_uri()
     await page.goto(url, wait_until="load", timeout=60000)
     await page.evaluate("() => document.fonts.ready")
+    # video.readyState >= 3 (HAVE_FUTURE_DATA) 까지 기다린 후 재생.
+    # 클라우드 라우틴 환경에서 영상이 hero에 안 들어가던 문제 해결.
     await page.evaluate(
-        "() => document.querySelectorAll('video').forEach(v => { v.muted = true; v.play(); })"
+        """async () => {
+          const vids = Array.from(document.querySelectorAll('video'));
+          if (vids.length === 0) return;
+          await Promise.all(vids.map(v => new Promise(resolve => {
+            v.muted = true;
+            v.playsInline = true;
+            const start = () => { v.play().catch(()=>{}); resolve(); };
+            if (v.readyState >= 3) start();
+            else {
+              v.addEventListener('canplay', start, { once: true });
+              v.addEventListener('error', () => resolve(), { once: true });
+              setTimeout(resolve, 5000);
+            }
+          }));
+        }"""
     )
     # SKIP_HEAD_SECONDS만큼 추가로 녹화해 두면 ffmpeg가 앞부분 trim 가능
     await asyncio.sleep(VIDEO_SECONDS + SKIP_HEAD_SECONDS)
@@ -107,22 +123,11 @@ async def main():
             args=["--autoplay-policy=no-user-gesture-required"]
         )
 
-        # PNG용 단일 컨텍스트 (video 없는 카드)
-        png_context = await browser.new_context(
-            viewport={"width": WIDTH, "height": HEIGHT},
-            device_scale_factor=SCALE,
-        )
-        png_page = await png_context.new_page()
-
+        # 모든 카드를 MP4로 출력 — 텔레그램 album type 통일 + 순서 보장
+        # video 태그 없는 카드도 6초 정적 영상으로
         for html_file in cards:
             print(f"[*] {html_file.name}")
-            if has_video_tag(html_file):
-                await render_mp4(browser, html_file)
-            else:
-                await render_png(png_page, html_file)
-
-        await png_page.close()
-        await png_context.close()
+            await render_mp4(browser, html_file)
 
         tmp_dir = OUT_DIR / "_tmp_video"
         if tmp_dir.exists():

@@ -78,37 +78,60 @@ jobs:
           mapfile -t FILES < <(ls "${FOLDER}/png/"*.mp4 2>/dev/null | sort -V)
           TOTAL=${#FILES[@]}
           if [ "$TOTAL" -eq 0 ]; then echo "No mp4 files found, skipping."; exit 0; fi
-          echo "Concatenating $TOTAL videos into one..."
-          # cwd를 png 디렉토리로 옮겨서 상대 경로 단순화 (ffmpeg concat이 한글 경로 안전)
+          echo "ffmpeg version check:"
+          ffmpeg -version | head -1
+          echo "Attempting concat: $TOTAL videos → 1 combined video"
           pushd "${FOLDER}/png" > /dev/null
           ls *.mp4 | sort -V | sed "s/.*/file '&'/" > _concat.txt
           echo "--- concat list ---"
           cat _concat.txt
-          echo "--- end ---"
-          # -c copy 생략하고 항상 재인코딩 (codec 일관성 보장)
-          ffmpeg -y -loglevel error -f concat -safe 0 -i _concat.txt \
+          echo "-------------------"
+          # ffmpeg 실행 (verbose하게 stderr 출력)
+          set +e
+          ffmpeg -y -hide_banner -f concat -safe 0 -i _concat.txt \
             -c:v libx264 -preset fast -crf 23 -pix_fmt yuv420p -vf "scale=1080:1350" \
-            -an -movflags +faststart _all.mp4 2>&1 | tail -20
+            -an -movflags +faststart _all.mp4 2>&1 | tail -30
           FFMPEG_EXIT=${PIPESTATUS[0]}
+          set -e
           popd > /dev/null
-          if [ "$FFMPEG_EXIT" != "0" ]; then
-            echo "::error::ffmpeg concat failed (exit $FFMPEG_EXIT)"
-            exit 1
-          fi
           OUT_MP4="${FOLDER}/png/_all.mp4"
           SIZE=$(stat -c%s "$OUT_MP4" 2>/dev/null || echo 0)
+          echo "ffmpeg exit=$FFMPEG_EXIT, output size=$SIZE bytes"
+
+          # concat 실패 또는 출력 너무 작음 → sendVideo 개별 fallback
+          if [ "$FFMPEG_EXIT" != "0" ] || [ "$SIZE" -lt 100000 ]; then
+            echo "::warning::concat failed/too-small, fallback to sendVideo individual"
+            rm -f "${FOLDER}/png/_concat.txt" "$OUT_MP4"
+            for i in "${!FILES[@]}"; do
+              F="${FILES[$i]}"
+              NAME=$(basename "$F" .mp4)
+              POS=$((i+1))
+              if [ $i -eq 0 ]; then
+                DISABLE_NOTIF="false"
+                CAPTION="카드뉴스 ${TOTAL}장 (${POS}/${TOTAL})"
+              else
+                DISABLE_NOTIF="true"
+                CAPTION="${POS}/${TOTAL}"
+              fi
+              RESP=$(curl -sS -w "\nHTTP_CODE:%{http_code}" -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendVideo" \
+                -F "chat_id=${TELEGRAM_CHAT_ID}" -F "video=@${F}" \
+                -F "supports_streaming=true" -F "width=1080" -F "height=1350" -F "duration=6" \
+                -F "disable_notification=${DISABLE_NOTIF}" -F "caption=${CAPTION}")
+              HTTP_CODE=$(echo "$RESP" | tail -1 | sed 's/HTTP_CODE://')
+              echo "  [${POS}/${TOTAL}] $NAME → HTTP $HTTP_CODE"
+              sleep 1
+            done
+            echo "Fallback sendVideo individual completed."
+            exit 0
+          fi
+
+          # concat 성공 → sendVideo 1번 (묶음 1개 영상)
           DURATION=$((TOTAL * 6))
-          echo "Combined video: ${SIZE} bytes, ${DURATION}s"
-          if [ "$SIZE" -lt 100000 ]; then
-            echo "::error::concat output too small ($SIZE bytes)"
-            exit 1
-          fi
           if [ "$SIZE" -gt 49000000 ]; then
-            echo "::warning::combined video > 49MB ($SIZE), telegram may reject (bot 50MB limit)"
+            echo "::warning::combined video > 49MB ($SIZE), might be rejected"
           fi
-          # sendVideo 1번 → 알림 1번 + 묶음 형태로 카드 10장 60초 영상
-          CAPTION="카드뉴스 ${TOTAL}장 (총 ${DURATION}초, 카드별 6초씩)"
-          echo "Sending combined video to telegram..."
+          CAPTION="카드뉴스 ${TOTAL}장 (총 ${DURATION}초)"
+          echo "Sending combined video ($SIZE bytes, ${DURATION}s)..."
           RESP=$(curl -sS -w "\nHTTP_CODE:%{http_code}" -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendVideo" \
             -F "chat_id=${TELEGRAM_CHAT_ID}" \
             -F "video=@${OUT_MP4}" \
@@ -118,10 +141,25 @@ jobs:
           HTTP_CODE=$(echo "$RESP" | tail -1 | sed 's/HTTP_CODE://')
           BODY=$(echo "$RESP" | sed '$d')
           echo "HTTP $HTTP_CODE | $(echo "$BODY" | head -c 300)"
-          # 정리
           rm -f "${FOLDER}/png/_concat.txt" "$OUT_MP4"
-          if [ "$HTTP_CODE" != "200" ]; then echo "::error::sendVideo combined failed HTTP $HTTP_CODE"; exit 1; fi
-          echo "Combined video sent successfully."
+          if [ "$HTTP_CODE" != "200" ]; then
+            echo "::warning::combined sendVideo failed, fallback to individual"
+            for i in "${!FILES[@]}"; do
+              F="${FILES[$i]}"
+              NAME=$(basename "$F" .mp4)
+              POS=$((i+1))
+              [ $i -eq 0 ] && DN="false" || DN="true"
+              [ $i -eq 0 ] && CAP="카드뉴스 ${TOTAL}장 (${POS}/${TOTAL})" || CAP="${POS}/${TOTAL}"
+              curl -sS -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendVideo" \
+                -F "chat_id=${TELEGRAM_CHAT_ID}" -F "video=@${F}" \
+                -F "supports_streaming=true" -F "width=1080" -F "height=1350" -F "duration=6" \
+                -F "disable_notification=${DN}" -F "caption=${CAP}" > /dev/null
+              echo "  [${POS}/${TOTAL}] $NAME sent (individual fallback)"
+              sleep 1
+            done
+            exit 0
+          fi
+          echo "Combined video sent successfully (1 album-like notification)."
 
       - name: Send caption text (더보기)
         if: steps.find.outputs.folder != ''

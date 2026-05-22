@@ -3,7 +3,6 @@ Render cards/card*.html → png/card*.png (또는 .mp4 if video card)
 
 - 비디오 태그(<video src=...>)가 포함된 카드는 MP4로 출력 (6초 녹화)
 - 그 외는 기존대로 1080×1350 @2x PNG
-- video.readyState >= 3 될 때까지 대기 후 녹화 (클라우드 환경 안정성)
 """
 import asyncio
 import sys

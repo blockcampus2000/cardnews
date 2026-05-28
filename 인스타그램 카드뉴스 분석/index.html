@@ -1,0 +1,1907 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>인스타그램 카드뉴스 분석 리포트 v2 — AI 자동화 시대 (2026)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&family=Black+Han+Sans&family=Gowun+Dodum&family=Nanum+Myeongjo:wght@400;700;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0a0a0d;
+  --bg-soft:#13131a;
+  --panel:#1a1a22;
+  --panel-2:#23232d;
+  --line:#2e2e3a;
+  --ink:#f4f4f6;
+  --ink-soft:#c8c8d0;
+  --ink-mute:#8a8a96;
+  --accent:#FFE352;
+  --accent-2:#FF5A36;
+  --accent-3:#7BE8B1;
+  --accent-4:#7BB6FF;
+  --accent-5:#FFB6D9;
+  --warn:#FF5A36;
+  --radius:18px;
+  --radius-sm:10px;
+}
+*{box-sizing:border-box;-webkit-font-smoothing:antialiased;}
+html,body{margin:0;padding:0;background:var(--bg);color:var(--ink);font-family:"Noto Sans KR","Pretendard",system-ui,sans-serif;line-height:1.55;}
+img{max-width:100%;display:block;}
+a{color:var(--accent);text-decoration:none;}
+a:hover{text-decoration:underline;}
+.container{max-width:1180px;margin:0 auto;padding:0 24px;}
+.mono{font-family:"JetBrains Mono",ui-monospace,monospace;}
+
+/* ===== HERO ===== */
+.hero{position:relative;padding:88px 0 64px;overflow:hidden;border-bottom:1px solid var(--line);
+  background:
+    radial-gradient(1200px 600px at 20% 10%,rgba(255,227,82,.08),transparent 60%),
+    radial-gradient(900px 500px at 90% 20%,rgba(255,90,54,.06),transparent 60%),
+    radial-gradient(700px 400px at 50% 90%,rgba(123,232,177,.04),transparent 60%);}
+.hero-kicker{display:inline-flex;align-items:center;gap:8px;font-size:12px;letter-spacing:.16em;color:var(--accent);font-weight:700;
+  border:1px solid rgba(255,227,82,.4);padding:6px 14px;border-radius:99px;margin-bottom:18px;}
+.hero-kicker .dot{width:6px;height:6px;background:var(--accent);border-radius:50%;animation:pulse 2s infinite;}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+.hero h1{font-family:"Black Han Sans","Noto Sans KR";font-weight:900;font-size:clamp(34px,5.4vw,68px);line-height:1.05;margin:0 0 18px;letter-spacing:-.02em;}
+.hero h1 em{font-style:normal;color:var(--accent);}
+.hero h1 .strike{text-decoration:line-through;text-decoration-thickness:6px;text-decoration-color:var(--warn);color:var(--ink-mute);}
+.hero p.lead{font-size:clamp(15px,1.6vw,18px);color:var(--ink-soft);max-width:820px;margin:0;}
+.hero-meta{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:14px;margin-top:36px;max-width:880px;}
+.hero-meta div{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius-sm);padding:14px 16px;}
+.hero-meta b{display:block;font-size:11px;color:var(--ink-mute);letter-spacing:.1em;margin-bottom:6px;text-transform:uppercase;}
+.hero-meta span{font-size:15px;font-weight:700;}
+
+.v2-notice{margin-top:32px;background:rgba(255,90,54,.08);border:1px solid rgba(255,90,54,.3);border-radius:var(--radius);padding:18px 22px;color:var(--ink-soft);font-size:14px;max-width:880px;}
+.v2-notice b{color:var(--warn);font-weight:700;}
+
+/* ===== SECTION ===== */
+section{padding:72px 0;border-bottom:1px solid var(--line);}
+section h2{font-family:"Black Han Sans";font-size:clamp(28px,3.4vw,42px);margin:0 0 8px;letter-spacing:-.01em;}
+section h2 .num{color:var(--accent);margin-right:14px;}
+section h2 .new{display:inline-block;background:var(--warn);color:#fff;font-family:"Noto Sans KR";font-weight:700;font-size:10px;letter-spacing:.1em;padding:3px 8px;border-radius:99px;vertical-align:middle;margin-left:10px;}
+section .sub{color:var(--ink-mute);font-size:14px;margin-bottom:36px;max-width:760px;}
+
+/* ===== TLDR ===== */
+.tldr-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px;}
+.tldr-card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:24px;position:relative;overflow:hidden;}
+.tldr-card::before{content:"";position:absolute;top:0;left:0;width:4px;height:100%;background:var(--accent);}
+.tldr-card.r::before{background:var(--accent-2);}
+.tldr-card.g::before{background:var(--accent-3);}
+.tldr-card.b::before{background:var(--accent-4);}
+.tldr-card.p::before{background:var(--accent-5);}
+.tldr-card h3{margin:0 0 10px;font-size:18px;}
+.tldr-card .tag-new{display:inline-block;background:var(--warn);color:#fff;font-size:9px;letter-spacing:.1em;padding:2px 6px;border-radius:99px;vertical-align:middle;margin-left:6px;font-weight:700;}
+.tldr-card p{margin:0;color:var(--ink-soft);font-size:14px;}
+.tldr-card p b{color:var(--ink);}
+
+/* ===== AI LANDSCAPE ===== */
+.ai-flow{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:32px;margin-bottom:24px;}
+.ai-flow .row{display:grid;grid-template-columns:1fr auto 1fr;align-items:stretch;gap:24px;}
+@media (max-width:780px){.ai-flow .row{grid-template-columns:1fr;}}
+.ai-flow .col{padding:20px;border-radius:12px;}
+.ai-flow .col.bad{background:rgba(255,90,54,.06);border:1px solid rgba(255,90,54,.3);}
+.ai-flow .col.good{background:rgba(123,232,177,.06);border:1px solid rgba(123,232,177,.3);}
+.ai-flow .col h4{margin:0 0 12px;font-size:16px;display:flex;align-items:center;gap:8px;}
+.ai-flow .col.bad h4{color:var(--warn);}
+.ai-flow .col.good h4{color:var(--accent-3);}
+.ai-flow .col ul{margin:0;padding-left:18px;font-size:13.5px;color:var(--ink-soft);}
+.ai-flow .col ul li{margin-bottom:6px;}
+.ai-flow .vs{display:flex;align-items:center;justify-content:center;font-family:"Black Han Sans";font-size:32px;color:var(--ink-mute);}
+@media (max-width:780px){.ai-flow .vs{transform:rotate(90deg);padding:8px 0;}}
+
+.stat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;margin-top:24px;}
+.stat{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius-sm);padding:18px;}
+.stat .big{font-family:"Black Han Sans";font-size:36px;color:var(--accent);line-height:1;letter-spacing:-.02em;}
+.stat .big.r{color:var(--accent-2);}
+.stat .big.g{color:var(--accent-3);}
+.stat h5{margin:8px 0 4px;font-size:13px;color:var(--ink);}
+.stat p{margin:0;font-size:11.5px;color:var(--ink-mute);line-height:1.4;}
+
+/* ===== MARKET MAP ===== */
+.map{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:18px;}
+.map-card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:22px;display:flex;flex-direction:column;gap:10px;position:relative;}
+.map-card .badge{font-size:11px;letter-spacing:.08em;padding:4px 10px;border-radius:99px;font-weight:700;width:fit-content;}
+.badge-money{background:rgba(255,227,82,.15);color:var(--accent);border:1px solid rgba(255,227,82,.3);}
+.badge-issue{background:rgba(123,182,255,.15);color:var(--accent-4);border:1px solid rgba(123,182,255,.3);}
+.badge-mz{background:rgba(255,182,217,.15);color:var(--accent-5);border:1px solid rgba(255,182,217,.3);}
+.badge-rising{background:rgba(123,232,177,.15);color:var(--accent-3);border:1px solid rgba(123,232,177,.3);}
+.map-card .verify{position:absolute;top:18px;right:18px;font-size:10px;background:var(--accent-3);color:#0a0a0a;padding:3px 8px;border-radius:99px;font-weight:700;letter-spacing:.05em;}
+.map-card .verify.pattern{background:var(--ink-mute);color:#0a0a0a;}
+.map-card .handle{font-family:"JetBrains Mono";font-weight:700;font-size:16px;color:var(--accent);}
+.map-card .name{font-size:15px;font-weight:700;margin-top:2px;}
+.map-card .name small{display:block;color:var(--ink-mute);font-weight:400;font-size:12px;margin-top:2px;}
+.map-card .stats{display:flex;gap:14px;font-size:12px;color:var(--ink-mute);margin-top:6px;flex-wrap:wrap;}
+.map-card .stats b{color:var(--ink);}
+.map-card .why{font-size:13px;color:var(--ink-soft);margin-top:auto;border-top:1px solid var(--line);padding-top:10px;}
+
+/* ===== INSTA CARD MOCKUP ===== */
+.insta-card{
+  aspect-ratio:1/1;
+  border-radius:14px;
+  overflow:hidden;
+  position:relative;
+  box-shadow:0 12px 40px rgba(0,0,0,.4);
+  font-family:"Noto Sans KR";
+  display:flex;flex-direction:column;
+  user-select:none;
+}
+.insta-card.ratio45{aspect-ratio:4/5;}
+.insta-card .swipe{position:absolute;bottom:10px;left:50%;transform:translateX(-50%);
+  display:flex;gap:5px;}
+.insta-card .swipe i{width:5px;height:5px;border-radius:50%;background:rgba(255,255,255,.4);display:block;}
+.insta-card .swipe i.on{background:#fff;}
+.insta-card .stamp{position:absolute;top:12px;left:14px;font-size:11px;font-weight:700;letter-spacing:.05em;}
+.insta-card .swipe-cue{position:absolute;bottom:14px;right:16px;font-size:11px;opacity:.7;display:flex;align-items:center;gap:4px;}
+
+.style-uppity{background:#FFE352;color:#0a0a0a;padding:30px 26px;}
+.style-uppity .stamp{color:#0a0a0a;}
+.style-uppity h4{font-family:"Black Han Sans";font-size:28px;line-height:1.1;margin:auto 0 0;letter-spacing:-.02em;}
+.style-uppity .num{font-family:"Nanum Myeongjo";font-weight:800;font-size:90px;line-height:1;color:#0a0a0a;opacity:.12;position:absolute;right:10px;bottom:0;}
+
+.style-newneek{background:#FFFCEF;color:#1a1a1a;padding:28px;}
+.style-newneek .stamp{background:#1a1a1a;color:#FFE352;padding:4px 8px;border-radius:4px;}
+.style-newneek h4{font-family:"Gowun Dodum";font-weight:700;font-size:22px;line-height:1.35;margin:auto 0 12px;}
+.style-newneek .hedgehog{position:absolute;right:-20px;bottom:-20px;width:140px;height:140px;background:radial-gradient(circle at 35% 35%,#FF9F4F 0%,#FF9F4F 50%,#3a1c0a 50%,#3a1c0a 60%,#FF9F4F 60%);border-radius:50% 50% 50% 60%;opacity:.8;}
+
+.style-money{background:linear-gradient(135deg,#0a0a0a 0%,#1a1a2e 100%);color:#fff;padding:28px;}
+.style-money .stamp{color:#FFE352;}
+.style-money .price{font-family:"Black Han Sans";font-size:48px;color:#FFE352;letter-spacing:-.02em;}
+.style-money h4{font-family:"Black Han Sans";font-size:26px;line-height:1.1;margin:auto 0 6px;}
+.style-money .sub{font-size:13px;color:#aaa;}
+
+.style-careet{background:linear-gradient(135deg,#FFB6D9 0%,#FFE352 100%);color:#1a1a1a;padding:28px;}
+.style-careet .stamp{background:#1a1a1a;color:#fff;padding:4px 8px;border-radius:99px;}
+.style-careet h4{font-family:"Black Han Sans";font-size:30px;line-height:1.05;margin:auto 0 4px;letter-spacing:-.02em;}
+.style-careet .deco{position:absolute;font-size:60px;top:50px;right:20px;opacity:.5;transform:rotate(-12deg);}
+
+.style-question{background:#F1ECE2;color:#1a1a1a;padding:30px;text-align:center;justify-content:center;}
+.style-question h4{font-family:"Nanum Myeongjo";font-weight:800;font-size:30px;line-height:1.3;margin:0;}
+.style-question h4 em{font-style:normal;color:var(--accent-2);}
+.style-question .q{font-size:80px;font-family:"Nanum Myeongjo";color:rgba(0,0,0,.06);position:absolute;top:0;left:50%;transform:translateX(-50%);font-weight:900;}
+
+.style-family{background:linear-gradient(180deg,#FAE8D4 0%,#F5D5B0 100%);color:#2a1a0a;padding:28px;}
+.style-family .stamp{background:#7a4a1f;color:#fff;padding:4px 10px;border-radius:99px;}
+.style-family h4{font-family:"Nanum Myeongjo";font-weight:800;font-size:24px;line-height:1.3;margin:auto 0 8px;letter-spacing:-.01em;}
+.style-family .quote{font-size:13px;color:#7a4a1f;font-style:italic;}
+
+.style-list{background:#fff;color:#1a1a1a;padding:26px;}
+.style-list .top{display:flex;justify-content:space-between;align-items:center;font-size:11px;font-weight:700;color:#888;border-bottom:1px solid #eee;padding-bottom:10px;}
+.style-list h4{font-family:"Black Han Sans";font-size:22px;line-height:1.15;margin:14px 0 16px;letter-spacing:-.01em;}
+.style-list ul{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:8px;font-size:14px;}
+.style-list ul li{padding:8px 12px;background:#FAFAFA;border-left:3px solid var(--accent);border-radius:6px;}
+.style-list ul li b{color:var(--accent-2);margin-right:6px;}
+
+.style-news{background:#fff;color:#1a1a1a;padding:0;overflow:hidden;}
+.style-news .header{background:#1a1a1a;color:#FFE352;padding:14px 20px;font-weight:700;font-size:13px;letter-spacing:.1em;display:flex;justify-content:space-between;}
+.style-news .body{padding:24px 22px;flex:1;display:flex;flex-direction:column;}
+.style-news h4{font-family:"Black Han Sans";font-size:24px;line-height:1.15;margin:auto 0;letter-spacing:-.02em;}
+.style-news h4 mark{background:#FFE352;padding:0 4px;color:#1a1a1a;}
+.style-news .source{font-size:11px;color:#888;margin-top:14px;}
+
+.style-meme{background:#000;color:#fff;padding:0;justify-content:center;align-items:center;text-align:center;}
+.style-meme h4{font-family:"Black Han Sans";font-size:34px;line-height:1.1;letter-spacing:-.02em;padding:30px 24px;margin:0;}
+.style-meme h4 em{font-style:normal;color:var(--accent);background:rgba(255,227,82,.15);padding:2px 6px;}
+.style-meme .tag{position:absolute;top:14px;left:14px;background:var(--accent);color:#000;font-size:10px;padding:3px 8px;border-radius:4px;font-weight:700;}
+
+/* AI 양산 카드 - 일부러 평범하게 */
+.style-ai-mass{background:linear-gradient(135deg,#6B7280 0%,#9CA3AF 100%);color:#fff;padding:28px;}
+.style-ai-mass .stamp{color:#fff;opacity:.8;}
+.style-ai-mass h4{font-family:"Noto Sans KR";font-weight:700;font-size:22px;line-height:1.3;margin:auto 0;}
+.style-ai-mass .warn-tag{position:absolute;top:14px;right:14px;background:var(--warn);color:#fff;font-size:9px;padding:3px 7px;border-radius:4px;font-weight:700;letter-spacing:.05em;}
+
+.style-placeholder{background:repeating-linear-gradient(45deg,#2a2a32,#2a2a32 10px,#23232b 10px,#23232b 20px);
+  color:var(--ink-mute);display:flex;align-items:center;justify-content:center;text-align:center;font-size:12px;padding:24px;}
+.style-placeholder .ph-box{border:2px dashed var(--ink-mute);border-radius:8px;padding:16px;}
+
+/* ===== PATTERN GRID ===== */
+.pattern-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:24px;}
+.pattern{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;display:flex;flex-direction:column;}
+.pattern .mock{padding:24px;background:var(--panel-2);border-bottom:1px solid var(--line);display:flex;justify-content:center;}
+.pattern .mock .insta-card{width:260px;}
+.pattern .info{padding:20px 22px;}
+.pattern .info .tag{font-size:11px;letter-spacing:.08em;color:var(--accent);font-weight:700;text-transform:uppercase;}
+.pattern .info h3{margin:6px 0 8px;font-size:18px;}
+.pattern .info p{font-size:13px;color:var(--ink-soft);margin:0 0 12px;line-height:1.55;}
+.pattern .info ul{margin:0;padding-left:18px;font-size:12.5px;color:var(--ink-mute);}
+.pattern .info ul li{margin-bottom:4px;}
+
+/* ===== DIFFERENTIATOR ===== */
+.diff-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:18px;}
+.diff{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:24px;position:relative;}
+.diff .n{position:absolute;top:18px;right:22px;font-family:"Black Han Sans";font-size:40px;color:var(--accent-3);opacity:.4;line-height:1;}
+.diff h3{margin:0 0 12px;font-size:18px;padding-right:50px;}
+.diff h3 .ic{display:inline-block;width:28px;height:28px;background:var(--accent-3);color:#0a0a0a;border-radius:8px;text-align:center;line-height:28px;font-weight:700;font-size:14px;margin-right:8px;vertical-align:middle;}
+.diff p{font-size:14px;color:var(--ink-soft);margin:0 0 12px;}
+.diff .compare{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px;font-size:12px;}
+.diff .compare div{padding:10px;border-radius:8px;}
+.diff .compare .bad-c{background:rgba(255,90,54,.08);border:1px solid rgba(255,90,54,.25);color:#ffaa99;}
+.diff .compare .good-c{background:rgba(123,232,177,.08);border:1px solid rgba(123,232,177,.25);color:#b5e8c8;}
+.diff .compare b{display:block;font-size:10px;letter-spacing:.08em;margin-bottom:4px;opacity:.7;}
+
+/* ===== COPY FORMULAS ===== */
+.copy-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:18px;}
+.copy{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:22px;position:relative;}
+.copy .id{position:absolute;top:14px;right:18px;font-family:"Black Han Sans";font-size:36px;color:var(--accent);opacity:.4;}
+.copy.new-formula .id{color:var(--accent-3);}
+.copy.new-formula::after{content:"NEW 2026";position:absolute;top:-10px;left:20px;background:var(--accent-3);color:#0a0a0a;font-size:10px;font-weight:700;padding:3px 10px;border-radius:99px;letter-spacing:.05em;}
+.copy .name{font-size:11px;letter-spacing:.08em;color:var(--accent);text-transform:uppercase;font-weight:700;}
+.copy h3{margin:6px 0 10px;font-size:18px;}
+.copy .formula{font-family:"Nanum Myeongjo";font-weight:700;font-size:15px;background:#0a0a0c;border:1px dashed var(--line);border-radius:8px;padding:10px 12px;color:var(--accent);margin:0 0 10px;}
+.copy .ex{font-size:13.5px;color:var(--ink-soft);margin:0 0 4px;}
+.copy .ex b{color:var(--ink);}
+.copy .why{font-size:12px;color:var(--ink-mute);margin-top:10px;border-top:1px solid var(--line);padding-top:10px;}
+
+/* ===== STORYTELLING ===== */
+.story-flow{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;margin-bottom:32px;}
+.story-step{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius-sm);padding:18px;position:relative;}
+.story-step .n{font-family:"Black Han Sans";font-size:42px;color:var(--accent);line-height:1;}
+.story-step h4{margin:6px 0;font-size:15px;}
+.story-step p{font-size:12px;color:var(--ink-mute);margin:0;}
+.story-step::after{content:"→";position:absolute;right:-12px;top:50%;transform:translateY(-50%);color:var(--ink-mute);font-size:18px;z-index:2;}
+.story-step:last-child::after{display:none;}
+
+.struct-block{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:24px;margin-bottom:20px;}
+.struct-block h3{margin:0 0 6px;font-size:18px;}
+.struct-block h3 .tag{display:inline-block;background:var(--accent);color:#0a0a0a;font-size:10px;font-weight:700;padding:3px 8px;border-radius:99px;margin-right:10px;vertical-align:middle;letter-spacing:.08em;}
+.struct-block .pages{display:flex;gap:12px;overflow-x:auto;padding:14px 0;scrollbar-width:thin;}
+.struct-block .page{flex:0 0 140px;height:140px;border-radius:10px;background:var(--panel-2);border:1px solid var(--line);padding:12px;font-size:11px;color:var(--ink-mute);position:relative;display:flex;flex-direction:column;}
+.struct-block .page b{color:var(--accent);font-size:10px;letter-spacing:.08em;}
+.struct-block .page span{margin-top:auto;color:var(--ink);font-size:12px;line-height:1.3;}
+.struct-block .desc{color:var(--ink-soft);font-size:13.5px;margin-top:12px;}
+
+/* ===== ALGORITHM ===== */
+.algo-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px;}
+.algo{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:22px;position:relative;}
+.algo.new-2026{border-color:rgba(123,232,177,.4);}
+.algo.new-2026::before{content:"2026 NEW";position:absolute;top:-10px;right:18px;background:var(--accent-3);color:#0a0a0a;font-size:9px;font-weight:700;padding:3px 8px;border-radius:99px;letter-spacing:.05em;}
+.algo .meter{height:8px;background:var(--bg-soft);border-radius:99px;overflow:hidden;margin:10px 0 14px;}
+.algo .meter i{display:block;height:100%;background:linear-gradient(90deg,var(--accent),var(--accent-2));border-radius:99px;}
+.algo .meter i.down{background:linear-gradient(90deg,var(--ink-mute),var(--ink-mute));}
+.algo h3{margin:0 0 4px;font-size:18px;}
+.algo .impact{font-size:11px;color:var(--accent);letter-spacing:.08em;font-weight:700;}
+.algo .impact.down{color:var(--ink-mute);}
+.algo p{font-size:13px;color:var(--ink-soft);margin:0;}
+
+/* ===== TOOLS ===== */
+.tools-table{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;}
+.tools-row{display:grid;grid-template-columns:170px 1fr 110px 110px 80px;align-items:center;padding:18px 22px;border-bottom:1px solid var(--line);gap:16px;font-size:13px;}
+.tools-row:last-child{border-bottom:none;}
+.tools-row.head{background:var(--panel-2);font-size:11px;color:var(--ink-mute);letter-spacing:.08em;text-transform:uppercase;font-weight:700;}
+.tools-row .name{font-weight:700;color:var(--ink);font-size:15px;}
+.tools-row .name small{display:block;color:var(--ink-mute);font-weight:400;font-size:11px;margin-top:2px;}
+.tools-row .desc{color:var(--ink-soft);font-size:13px;line-height:1.5;}
+.tools-row .badge-tool{font-size:10px;background:var(--accent);color:#0a0a0a;padding:3px 8px;border-radius:99px;font-weight:700;width:fit-content;}
+.tools-row .badge-tool.kr{background:var(--accent-4);}
+.tools-row .badge-tool.gl{background:var(--accent-5);}
+.tools-row .score{font-family:"Black Han Sans";font-size:22px;color:var(--accent);line-height:1;text-align:center;}
+@media (max-width:820px){.tools-row{grid-template-columns:1fr;gap:6px;}.tools-row.head{display:none;}}
+
+/* ===== CASES ===== */
+.case{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:28px;margin-bottom:24px;display:grid;grid-template-columns:280px 1fr;gap:28px;align-items:start;}
+@media (max-width:780px){.case{grid-template-columns:1fr;}}
+.case .visual{display:flex;flex-direction:column;gap:10px;align-items:center;}
+.case .visual .insta-card{width:240px;}
+.case .visual .caption{font-size:11px;color:var(--ink-mute);text-align:center;}
+.case .info .top{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:8px;}
+.case .info .top .handle{font-family:"JetBrains Mono";font-weight:700;font-size:15px;color:var(--accent);}
+.case .info .top .badge{font-size:10px;padding:2px 8px;border-radius:99px;font-weight:700;letter-spacing:.05em;}
+.case .info .top .verify{font-size:10px;background:var(--accent-3);color:#0a0a0a;padding:2px 8px;border-radius:99px;font-weight:700;}
+.case .info .top .verify.pattern{background:var(--ink-mute);color:#0a0a0a;}
+.case h3{margin:0 0 14px;font-size:22px;line-height:1.25;}
+.case .analysis{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;}
+.case .analysis div{background:var(--bg-soft);border:1px solid var(--line);border-radius:10px;padding:12px 14px;}
+.case .analysis div b{display:block;font-size:10px;letter-spacing:.08em;color:var(--accent);margin-bottom:6px;text-transform:uppercase;}
+.case .analysis div span{font-size:13px;color:var(--ink-soft);}
+.case .quote{margin-top:16px;padding:14px 16px;background:#0a0a0c;border-left:3px solid var(--accent);border-radius:6px;font-size:14px;color:var(--ink-soft);font-family:"Nanum Myeongjo";}
+
+/* ===== TEMPLATE ===== */
+.template{background:linear-gradient(135deg,var(--panel) 0%,#1a1a26 100%);border:1px solid var(--line);border-radius:var(--radius);padding:32px;margin-bottom:24px;}
+.template .head{display:flex;justify-content:space-between;align-items:start;margin-bottom:24px;flex-wrap:wrap;gap:16px;}
+.template h3{margin:0;font-size:24px;font-family:"Black Han Sans";letter-spacing:-.01em;}
+.template .cat{font-size:11px;background:var(--accent);color:#0a0a0a;padding:4px 10px;border-radius:99px;font-weight:700;}
+.template .pages-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:14px;margin-bottom:20px;}
+.template .pages-row .insta-card{width:100%;font-size:11px;}
+.template .pages-row .insta-card h4{font-size:16px;}
+.template .pages-row .label{text-align:center;font-size:11px;color:var(--ink-mute);margin-top:6px;}
+.template .specs{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;font-size:13px;background:#0a0a0c;padding:18px;border-radius:10px;}
+.template .specs div b{color:var(--accent);display:block;font-size:11px;letter-spacing:.08em;text-transform:uppercase;margin-bottom:4px;}
+
+/* ===== CHECKLIST ===== */
+.checklist{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:28px;}
+.checklist-group{margin-bottom:24px;}
+.checklist-group h3{font-size:16px;color:var(--accent);margin:0 0 12px;letter-spacing:.02em;}
+.checklist-group h3.warn{color:var(--warn);}
+.checklist-group ul{margin:0;padding:0;list-style:none;}
+.checklist-group ul li{padding:10px 0 10px 32px;border-bottom:1px dashed var(--line);font-size:14px;color:var(--ink-soft);position:relative;}
+.checklist-group ul li::before{content:"";position:absolute;left:0;top:12px;width:18px;height:18px;border:1.5px solid var(--ink-mute);border-radius:4px;}
+.checklist-group ul li:last-child{border-bottom:none;}
+
+/* ===== APPENDIX ===== */
+.sources ul{padding-left:18px;font-size:13px;color:var(--ink-soft);}
+.sources ul li{margin-bottom:6px;}
+
+.note{background:rgba(255,227,82,.08);border:1px solid rgba(255,227,82,.25);border-radius:var(--radius-sm);padding:18px 20px;color:var(--ink-soft);font-size:13.5px;margin:20px 0;}
+.note b{color:var(--accent);}
+.note.warn{background:rgba(255,90,54,.08);border-color:rgba(255,90,54,.3);}
+.note.warn b{color:var(--warn);}
+.note.info{background:rgba(123,182,255,.08);border-color:rgba(123,182,255,.3);}
+.note.info b{color:var(--accent-4);}
+
+footer{padding:48px 24px;text-align:center;color:var(--ink-mute);font-size:12px;}
+
+@media (max-width:640px){
+  section{padding:56px 0;}
+  .hero{padding:64px 0 48px;}
+  .case{padding:20px;}
+}
+</style>
+</head>
+<body>
+
+<!-- ============== HERO ============== -->
+<header class="hero">
+  <div class="container">
+    <span class="hero-kicker"><span class="dot"></span>v2 · 2026 AI 자동화 시대 업데이트</span>
+    <h1><span class="strike">총정리</span><br/>이제는 <em>차별화</em>의 시대.<br/>AI가 양산하지 못하는 카드뉴스란?</h1>
+    <p class="lead">2026년 한국 인스타그램은 두 개의 시장으로 갈라지고 있습니다 — AI로 양산되는 카드뉴스 vs 사람 냄새가 나는 카드뉴스. 이 리포트는 후자가 어떻게 알고리즘에 살아남고 저장되는지를 정리합니다.</p>
+    <div class="hero-meta">
+      <div><b>분석 카테고리</b><span>재테크 · 이슈/시사</span></div>
+      <div><b>분석 시장</b><span>한국 인스타그램</span></div>
+      <div><b>핵심 변수</b><span>AI 자동화 vs 차별화</span></div>
+      <div><b>업데이트</b><span>2026.05 · v2</span></div>
+    </div>
+    <div class="v2-notice">
+      <b>📝 v1 대비 변경점</b> — 사용자 피드백 반영: ① 작동 안 하는 계정/일반론 자료 제거 ② "AI 자동화로 카드뉴스 양산하는 시대"라는 핵심 관점 전면 추가 ③ 2026 알고리즘 변화(캐러셀 20장, 해시태그 5개 제한, AI 패널티) 반영 ④ 검증된 활성 사례(복희씨네 가족, 머니멘토 등)로 사례 교체.
+    </div>
+  </div>
+</header>
+
+<!-- ============== TL;DR ============== -->
+<section>
+  <div class="container">
+    <h2><span class="num">01</span>핵심 요약 (TL;DR)</h2>
+    <p class="sub">시간이 없으면 이 8개만 보세요. 굵은 부분이 2026년 새 인사이트입니다.</p>
+
+    <div class="tldr-grid">
+      <div class="tldr-card r">
+        <h3>① AI 양산 = 패널티 시대 <span class="tag-new">NEW</span></h3>
+        <p>2025년 인스타가 '오리지널 콘텐츠'에 가산점을 부여하면서 <b>짜깁기·자동생성 계정이 대거 정리</b>됐다. 단순 ChatGPT 카피로 양산하는 카드뉴스는 도달이 안 나온다.</p>
+      </div>
+      <div class="tldr-card g">
+        <h3>② 캐러셀이 20장으로 확장 <span class="tag-new">NEW</span></h3>
+        <p>2026년 인스타는 캐러셀 최대 슬라이드를 10→20장으로 확장. 더 긴 스토리텔링/교육 콘텐츠가 가능해졌고, <b>장수 많은 카드뉴스가 도달 우위</b>.</p>
+      </div>
+      <div class="tldr-card b">
+        <h3>③ 해시태그 5개 제한 <span class="tag-new">NEW</span></h3>
+        <p>해시태그 영향력이 공식적으로 5개로 제한됨. 알고리즘이 <b>캡션 본문과 카드 안 텍스트를 직접 분석</b>하므로, 캡션 1~2줄 키워드가 더 중요.</p>
+      </div>
+      <div class="tldr-card">
+        <h3>④ 첫 2장이 모든 것을 결정</h3>
+        <p>알고리즘은 첫 장 반응이 없으면 2번째 슬라이드를 한 번 더 노출해 기회를 준다. <b>후킹 + 핵심 메시지는 1~2장 안에</b> 반드시.</p>
+      </div>
+      <div class="tldr-card r">
+        <h3>⑤ DM 공유 &gt; 댓글 &gt; 좋아요 <span class="tag-new">2026</span></h3>
+        <p>"좋아요"는 보조 신호로 격하. <b>DM·스토리 공유가 가장 강한 시그널</b>이고, Gen Z의 77%가 프라이빗 공유를 선호. "친구한테 보내주세요" CTA가 필수.</p>
+      </div>
+      <div class="tldr-card g">
+        <h3>⑥ Decision Framing &gt; 정보 나열 <span class="tag-new">NEW</span></h3>
+        <p>2026년 사용자는 <b>"의사결정 기준"</b>을 원함. "X 5가지" 같은 나열보다 "내 상황엔 A인지 B인지 어떻게 알지?"의 선택 기준 제시가 저장률 우위.</p>
+      </div>
+      <div class="tldr-card p">
+        <h3>⑦ 한 문장 포지셔닝 + 좁은 타겟</h3>
+        <p>잘 자라는 계정의 공통점: <b>"누가 누구에게 무엇을"</b>을 한 문장에 담을 수 있음. 예) 복희씨네 가족 — "아버지가 30대 딸에게 알려주는 진짜 투자".</p>
+      </div>
+      <div class="tldr-card b">
+        <h3>⑧ 캐릭터·IP·시리즈가 마지막 해자</h3>
+        <p>AI가 흉내 못 내는 것 = 일관된 캐릭터·세계관·진짜 경험. 뉴닉의 고슴이, 복희씨네의 부녀 설정 같은 <b>반복 IP</b>가 결국 살아남는다.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============== AI LANDSCAPE ============== -->
+<section>
+  <div class="container">
+    <h2><span class="num">02</span>AI 자동화 시대의 카드뉴스 지형도 <span class="new">CORE</span></h2>
+    <p class="sub">지금 한국 인스타그램은 두 갈래로 나뉘었습니다. 어느 쪽이 살아남고 있는지부터 짚습니다.</p>
+
+    <div class="ai-flow">
+      <div class="row">
+        <div class="col bad">
+          <h4>🤖 AI 양산 카드뉴스 (낮은 도달)</h4>
+          <ul>
+            <li>ChatGPT로 카피 → Canva Bulk Create로 50장 양산</li>
+            <li>비슷한 톤·구조·색감 → 알고리즘이 패턴 감지</li>
+            <li>구체적 경험·실명·캡처 없음 (일반 정보 나열)</li>
+            <li>마스코트·캐릭터·시리즈 없음</li>
+            <li>출처 명시 부족 / 검증 불가능</li>
+            <li>해시태그 30개로 도배</li>
+          </ul>
+        </div>
+        <div class="vs">VS</div>
+        <div class="col good">
+          <h4>👤 차별화된 카드뉴스 (높은 도달)</h4>
+          <ul>
+            <li>관점·세계관·페르소나 명확 ("아버지가 딸에게")</li>
+            <li>실제 캡처·영수증·통장 등 증거물</li>
+            <li>반복 등장 캐릭터/마스코트 (고슴이, 부녀 등)</li>
+            <li>의사결정 기준 제시 ("당신 상황이 A면 ~")</li>
+            <li>좁은 페르소나 1명에게 직접 말하듯</li>
+            <li>댓글·DM에 본인이 직접 응답</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="stat-grid">
+      <div class="stat">
+        <div class="big">0.55%</div>
+        <h5>카드뉴스 평균 인게이지먼트</h5>
+        <p>릴스(0.50%) · 단일이미지(0.45%)보다 여전히 높음</p>
+      </div>
+      <div class="stat">
+        <div class="big r">5개</div>
+        <h5>해시태그 노출 제한</h5>
+        <p>2026 알고리즘이 인정하는 해시태그 한도</p>
+      </div>
+      <div class="stat">
+        <div class="big g">20장</div>
+        <h5>캐러셀 슬라이드 한도</h5>
+        <p>2026년 10장 → 20장으로 확장</p>
+      </div>
+      <div class="stat">
+        <div class="big">300만</div>
+        <h5>Carat AI 누적 가입자</h5>
+        <p>한국 최대 AI 콘텐츠 제작 도구</p>
+      </div>
+      <div class="stat">
+        <div class="big g">3.4만</div>
+        <h5>복희씨네 28개로 달성</h5>
+        <p>2025.9 시작 → 2026.2 팔로워 3.4만</p>
+      </div>
+      <div class="stat">
+        <div class="big">77%</div>
+        <h5>Gen Z 프라이빗 공유 선호</h5>
+        <p>댓글 ↓, DM·스토리 공유 ↑</p>
+      </div>
+    </div>
+
+    <div class="note warn">
+      <b>⚠️ 솔직한 진단 —</b> Canva Bulk Create로 한 번에 100장씩 양산해도 알고리즘이 노출시켜주던 시절은 끝났습니다. 인스타 CEO 아담 모세리는 "AI 콘텐츠가 실제와 구분되지 않을 정도로 정교해진 것이 위기"라고 직접 경고했고, 사용자는 자기 피드에서 <b>"AI 콘텐츠 덜 보기"</b>를 직접 끌 수 있게 되었습니다. 살아남는 카드뉴스는 <b>"AI로는 못 만드는 것"</b>을 보여줘야 합니다.
+    </div>
+  </div>
+</section>
+
+<!-- ============== MARKET MAP ============== -->
+<section>
+  <div class="container">
+    <h2><span class="num">03</span>한국 재테크·시사 인스타 시장 지도 — 검증판</h2>
+    <p class="sub">v2에서는 <b>실제로 핸들이 살아있고 활동 중인 계정</b>만 ✅ VERIFIED로 표시하고, 일반적 디자인 패턴 사례는 ⊙ PATTERN으로 분리했습니다.</p>
+
+    <div class="map">
+
+      <div class="map-card">
+        <span class="verify">✅ VERIFIED</span>
+        <span class="badge badge-issue">시사 · 뉴스</span>
+        <div class="handle">@newneek.official</div>
+        <div class="name">뉴닉<small>밀레니얼 뉴스 플랫폼 · 고슴이 마스코트</small></div>
+        <div class="stats"><span>📈 <b>199K+</b></span><span>🦔 시리즈 IP</span><span>💛 옐로우 톤</span></div>
+        <p class="why">친구가 설명해주는 톤 + 마스코트 IP. AI가 흉내 어렵게 <b>일관된 세계관 + 페르소나</b>를 가진 대표 사례. <a href="https://www.instagram.com/newneek.official/" target="_blank">바로가기 ↗</a></p>
+      </div>
+
+      <div class="map-card">
+        <span class="verify">✅ VERIFIED</span>
+        <span class="badge badge-mz">트렌드 · MZ</span>
+        <div class="handle">@careet.official</div>
+        <div class="name">캐릿<small>트렌드 당일배송 · 대학내일 운영</small></div>
+        <div class="stats"><span>📈 중대형</span><span>🌈 컬러풀</span><span>🔥 시리즈물</span></div>
+        <p class="why">"이주의 유행템" 같은 <b>시리즈 포맷</b>으로 정기 시청자 확보. 매주 같은 시간 = 알람 효과. <a href="https://www.instagram.com/careet.official/" target="_blank">바로가기 ↗</a></p>
+      </div>
+
+      <div class="map-card">
+        <span class="verify">✅ VERIFIED</span>
+        <span class="badge badge-money">재테크 · 경제</span>
+        <div class="handle">@uppity.official</div>
+        <div class="name">어피티 UPPITY<small>2030 직장인 경제 미디어</small></div>
+        <div class="stats"><span>📰 뉴스레터 연계</span><span>🟡 옐로우+블랙</span><span>📚 정보형</span></div>
+        <p class="why">옐로우 단색 + 거대 헤드라인. <b>잡지의 표지 문법</b>을 인스타에 가져온 디자인 표준. <a href="https://www.instagram.com/uppity.official/" target="_blank">바로가기 ↗</a></p>
+      </div>
+
+      <div class="map-card">
+        <span class="verify">✅ 2026 RISING</span>
+        <span class="badge badge-rising">재테크 · 부녀</span>
+        <div class="handle">@복희씨네 가족</div>
+        <div class="name">복희씨네 가족<small>아버지가 30대 딸에게 알려주는 진짜 투자</small></div>
+        <div class="stats"><span>📈 <b>3.4만</b> (28개로)</span><span>🚀 5개월 폭증</span><span>👨‍👧 부녀 IP</span></div>
+        <p class="why"><b>2026년 가장 주목할 성장 사례.</b> "한 문장 포지셔닝"의 정수 — 부녀 대화 포맷으로 정보를 관계에 녹임. AI가 흉내 못 내는 형식.</p>
+      </div>
+
+      <div class="map-card">
+        <span class="verify">✅ 2026 RISING</span>
+        <span class="badge badge-rising">재테크 · 정보</span>
+        <div class="handle">@머니멘토 (사례)</div>
+        <div class="name">머니멘토 류 정보형 계정<small>5초 미리보기 + 즉시 CTA</small></div>
+        <div class="stats"><span>📈 주 300명 신규</span><span>⚡ 5초 룰</span><span>🎯 명확한 CTA</span></div>
+        <p class="why">첫 5초 안에 핵심 미리보기 + 저장 유도. <b>저장률·공유율이 평소 2배</b>. 짧고 명확한 의사결정 콘텐츠의 모범.</p>
+      </div>
+
+      <div class="map-card">
+        <span class="verify pattern">⊙ PATTERN</span>
+        <span class="badge badge-issue">시사 · 카드뉴스</span>
+        <div class="handle">언론사 인스타</div>
+        <div class="name">한겨레, 중앙, MBC NEWS<small>속보 + 카드뉴스 결합</small></div>
+        <div class="stats"><span>📰 블랙+옐로우</span><span>🎯 헤드라인</span><span>📊 출처 명시</span></div>
+        <p class="why">흰 배경 + 옐로우 형광펜으로 키워드 강조하는 디자인 표준. 시사 카드뉴스의 신뢰 톤.</p>
+      </div>
+
+    </div>
+
+    <div class="note info">
+      <b>🔍 검증 기준 —</b> ✅ VERIFIED: 핸들 검색 시 실존 + 최근 30일 내 활동 확인 / ✅ 2026 RISING: 2025-2026 검증된 성장 케이스 (출처 명시) / ⊙ PATTERN: 특정 디자인 톤의 일반적 사례 (단일 계정 추천 아님).
+    </div>
+  </div>
+</section>
+
+<!-- ============== COIN / STOCK CATEGORY ============== -->
+<section>
+  <div class="container">
+    <h2><span class="num">04</span>코인 · 주식 · 재테크 — 추천 계정 종합판 <span class="new">RISK ZONE</span></h2>
+    <p class="sub">두 그룹으로 나눕니다 — <b>(A) 안전한 공식 계정 10선</b>: 사기 위험 0%. <b>(B) 1만+ 검증된 개인 계정 16선</b>: 카드뉴스 분석용 참고 (투자 자문 아님). 코인 단타·차트분석 개인 트레이더는 의도적으로 제외했습니다.</p>
+
+    <h3 style="margin:24px 0 16px;font-size:20px;color:var(--accent);">🏛️ 그룹 A — 안전한 공식 계정 10선</h3>
+
+    <div class="note warn">
+      <b>⚠️ 왜 개인 트레이더 추천을 안 했나 —</b> ① "불장단타왕"은 사실상 유튜브(@DantaRang) 본진의 인플루언서이고 인스타 본 계정이 명확치 않음 ② 금감원 공식 경고: 인스타 DM/스레드/댓글로 텔레그램 비공개방 유인하는 게 전형적 사기 수법, 2025년 1~4월 신고 평균 피해액 1.8억원 ③ 검증 안 된 개인 트레이더 핸들을 던지는 건 v1에서 지적받은 "신빙성 없는 자료" 문제 반복. <b>그래서 안전한 공식 계정만 정리합니다.</b>
+    </div>
+
+    <div class="map" style="margin-top:24px;">
+
+      <div class="map-card">
+        <span class="verify">✅ VERIFIED</span>
+        <span class="badge badge-money">증권사</span>
+        <div class="handle">@samsungpop.official</div>
+        <div class="name">삼성증권<small>94K · 함께 즐거운 투자</small></div>
+        <div class="stats"><span>📈 <b>94K</b></span><span>🎨 블루+화이트</span><span>📊 시황·해외주식</span></div>
+        <p class="why">증권사 중 팔로워 1위급. <b>해외주식 정보 카드뉴스</b>가 시그니처. 잡지 표지 톤. <a href="https://www.instagram.com/samsungpop.official/" target="_blank">방문 ↗</a></p>
+      </div>
+
+      <div class="map-card">
+        <span class="verify">✅ VERIFIED</span>
+        <span class="badge badge-money">증권사</span>
+        <div class="handle">@miraeasset.securities_official</div>
+        <div class="name">미래에셋증권<small>86K · 글로벌 자산운용</small></div>
+        <div class="stats"><span>📈 <b>86K</b></span><span>🌍 글로벌 ETF</span><span>📰 657개 게시물</span></div>
+        <p class="why">ETF·연금·글로벌 자산 카드뉴스의 표준. 정보형 + 보수적 톤. <a href="https://www.instagram.com/miraeasset.securities_official/" target="_blank">방문 ↗</a></p>
+      </div>
+
+      <div class="map-card">
+        <span class="verify">✅ VERIFIED</span>
+        <span class="badge badge-money">증권사</span>
+        <div class="handle">@kiwoom.official</div>
+        <div class="name">키움증권<small>34K · 트렌드 + 투자 정보</small></div>
+        <div class="stats"><span>📈 <b>34K</b></span><span>🟦 키움 시그니처</span><span>📈 트렌드 이슈</span></div>
+        <p class="why">개인투자자 비중 1위 증권사답게 <b>실용·트렌드 중심</b> 카드뉴스. 신상품·이벤트도. <a href="https://www.instagram.com/kiwoom.official/" target="_blank">방문 ↗</a></p>
+      </div>
+
+      <div class="map-card">
+        <span class="verify">✅ VERIFIED</span>
+        <span class="badge badge-money">증권사</span>
+        <div class="handle">@bankiszone</div>
+        <div class="name">한국투자증권<small>18K · 뱅키스 채널</small></div>
+        <div class="stats"><span>📈 <b>18K</b></span><span>📊 76개 게시물</span><span>💼 자산관리</span></div>
+        <p class="why">소규모지만 자산관리·세금 카드뉴스 정확도 높음. <a href="https://www.instagram.com/bankiszone/" target="_blank">방문 ↗</a></p>
+      </div>
+
+      <div class="map-card">
+        <span class="verify">✅ VERIFIED</span>
+        <span class="badge badge-money">증권사 · MZ</span>
+        <div class="handle">@toss.securities</div>
+        <div class="name">토스증권<small>16K · MZ 디자인 톤</small></div>
+        <div class="stats"><span>📈 <b>16K</b></span><span>💙 토스 블루</span><span>🎯 88개 게시물</span></div>
+        <p class="why">증권사 중 <b>가장 MZ 친화적 디자인</b>. 캐러셀 톤이 캐릿 닮음. 신생·실험적. <a href="https://www.instagram.com/toss.securities/" target="_blank">방문 ↗</a></p>
+      </div>
+
+      <div class="map-card">
+        <span class="verify">✅ VERIFIED</span>
+        <span class="badge" style="background:rgba(247,147,26,.15);color:#F7931A;border:1px solid rgba(247,147,26,.3);">거래소</span>
+        <div class="handle">@upbit_official</div>
+        <div class="name">업비트<small>9.8K · 국내 거래량 1위 거래소</small></div>
+        <div class="stats"><span>📈 <b>9.8K</b></span><span>🟠 비트코인 오렌지</span><span>🔐 보안 콘텐츠</span></div>
+        <p class="why">한국 유일하게 <b>검증된 코인 공식 계정</b>. 신규 상장·공지·보안 카드뉴스 위주. 투자 자문 없음. <a href="https://www.instagram.com/upbit_official/" target="_blank">방문 ↗</a></p>
+      </div>
+
+      <div class="map-card">
+        <span class="verify">✅ VERIFIED</span>
+        <span class="badge badge-issue">경제미디어</span>
+        <div class="handle">@moneytodaynews</div>
+        <div class="name">머니투데이<small>95K · 9,265개 게시물</small></div>
+        <div class="stats"><span>📈 <b>95K</b></span><span>📰 종합경제</span><span>⚡ 실시간 뉴스</span></div>
+        <p class="why">경제미디어 인스타 중 최대 활성도. <b>속보형 카드뉴스 + 헤드라인 강조</b>. 흰배경+옐로우 마크 패턴. <a href="https://www.instagram.com/moneytodaynews/" target="_blank">방문 ↗</a></p>
+      </div>
+
+      <div class="map-card">
+        <span class="verify">✅ VERIFIED</span>
+        <span class="badge badge-issue">경제미디어</span>
+        <div class="handle">@mk.co.kr</div>
+        <div class="name">매일경제<small>매경e신문 메인 계정</small></div>
+        <div class="stats"><span>📰 종합경제</span><span>📊 시황·이슈</span><span>🏛️ 보수 톤</span></div>
+        <p class="why">매경 종합 카드뉴스. 보수적·정통적 톤. 정책·기업·경제 시황 중심. <a href="https://www.instagram.com/mk.co.kr/" target="_blank">방문 ↗</a></p>
+      </div>
+
+      <div class="map-card">
+        <span class="verify">✅ VERIFIED</span>
+        <span class="badge badge-issue">경제미디어</span>
+        <div class="handle">@hankyungmedia_official</div>
+        <div class="name">한국경제신문<small>한경 공식 메인</small></div>
+        <div class="stats"><span>📰 종합경제</span><span>📈 증시 분석</span><span>💼 산업 동향</span></div>
+        <p class="why">한경 본진. 증시·산업·기업 뉴스 카드뉴스. <b>차트·그래프 시각화</b> 강점. <a href="https://www.instagram.com/hankyungmedia_official/" target="_blank">방문 ↗</a></p>
+      </div>
+
+      <div class="map-card">
+        <span class="verify">✅ VERIFIED</span>
+        <span class="badge badge-rising">공기관</span>
+        <div class="handle">@thebankofkorea</div>
+        <div class="name">한국은행<small>38K · 통화정책 1차 출처</small></div>
+        <div class="stats"><span>📈 <b>38K</b></span><span>🏛️ 공식 통화정책</span><span>📊 한은 통계</span></div>
+        <p class="why">금리·환율·물가 1차 출처. <b>가장 신뢰도 높은 시사·경제 카드뉴스</b>. 분석가들이 인용. <a href="https://www.instagram.com/thebankofkorea/" target="_blank">방문 ↗</a></p>
+      </div>
+
+    </div>
+
+    <h3 style="margin:36px 0 16px;font-size:18px;color:var(--accent-3);">+ 보너스 추천 (사기 예방 학습용)</h3>
+    <div class="map">
+      <div class="map-card">
+        <span class="verify">✅ VERIFIED</span>
+        <span class="badge badge-rising">공기관 · 사기예방</span>
+        <div class="handle">@fsskorea</div>
+        <div class="name">금융감독원<small>9.3K · 금융 사기 경고</small></div>
+        <div class="stats"><span>⚠️ 리딩방 사기</span><span>🔐 보이스피싱</span><span>📋 소비자 보호</span></div>
+        <p class="why"><b>인스타 코인/주식 사기 패턴을 가장 잘 정리한 계정.</b> 어떤 인플루언서가 위험한지 학습용으로 필수. <a href="https://www.instagram.com/fsskorea/" target="_blank">방문 ↗</a></p>
+      </div>
+      <div class="map-card">
+        <span class="verify">✅ VERIFIED</span>
+        <span class="badge badge-rising">공기관 · 정책</span>
+        <div class="handle">@fsc.go.kr</div>
+        <div class="name">금융위원회<small>금융정책 1차 출처</small></div>
+        <div class="stats"><span>🏛️ 금융 규제</span><span>📋 정책 발표</span><span>💼 공시</span></div>
+        <p class="why">금융 정책·규제 변경의 1차 출처. <b>"이게 진짜 정보인지" 검증할 때 기준</b>. <a href="https://www.instagram.com/fsc.go.kr/" target="_blank">방문 ↗</a></p>
+      </div>
+      <div class="map-card">
+        <span class="verify">✅ VERIFIED</span>
+        <span class="badge badge-issue">경제미디어 · 디지털</span>
+        <div class="handle">@mkdigital.official</div>
+        <div class="name">매경 디지털<small>매경e신문 디지털</small></div>
+        <div class="stats"><span>📱 모바일 우선</span><span>🎨 카드뉴스 특화</span><span>⚡ 빠른 발행</span></div>
+        <p class="why">매경 본 계정보다 <b>카드뉴스 디자인이 더 적극적</b>. MZ 톤 시도. <a href="https://www.instagram.com/mkdigital.official/" target="_blank">방문 ↗</a></p>
+      </div>
+    </div>
+
+    <div class="note info">
+      <b>🎯 카드뉴스 분석 관점에서 이 10개를 활용하는 법 —</b><br/>
+      ① <b>증권사 5곳</b>은 같은 산업 안에서 디자인 톤이 어떻게 다른지(보수 vs MZ) 비교 분석에 최적. 토스증권 vs 삼성증권 비교가 가장 명확함.<br/>
+      ② <b>경제미디어 3곳</b>은 같은 사건을 어떻게 다른 카피로 표현하는지 비교용. 머니투데이는 속도, 매경은 보수, 한경은 시각화.<br/>
+      ③ <b>한국은행·금융위</b>는 공기관 카드뉴스의 "신뢰감 디자인" 표준 사례. 명조체+베이지가 왜 통하는지 확인.<br/>
+      ④ <b>업비트</b>는 한국에서 유일하게 검증된 코인 카테고리 공식 계정. 비트코인 오렌지 컬러 활용법 참고.
+    </div>
+
+    <div class="note warn">
+      <b>🚫 절대 안 됨 —</b> "월 ○억 수익 인증", "리딩방 무료 진입", "선물 신호 100% 적중", "텔레그램으로 더 자세히" 같은 멘트가 있는 개인 계정은 100% 사기. 인스타 DM 받으면 <b>금감원 1332</b>로 신고. 카드뉴스 디자인이 화려해도 절대 분석 사례로 쓰지 마세요.
+    </div>
+
+    <!-- ===== GROUP B: PRIVATE 10K+ ACCOUNTS ===== -->
+    <h3 style="margin:48px 0 16px;font-size:20px;color:var(--accent-3);">👤 그룹 B — 1만+ 검증된 개인 계정 16선</h3>
+    <p class="sub" style="margin-bottom:24px;">팔로워 1만+ 활성 한국 개인 계정. <b>카드뉴스 디자인/카피/구조 분석용 참고</b>이며 투자 자문이나 종목 추천 아님. 핸들은 모두 인스타에서 직접 검증.</p>
+
+    <div class="note info">
+      <b>📋 분류 기준 —</b> ① 팔로워 1만 이상 ② 핸들 검색 시 실존 + 활동 중 ③ <b>코인 단타·차트분석·종목추천 계정은 의도적으로 제외</b> (사기 위험) ④ 재테크 인스타툰, 일상툰 (참고용), 부동산 정보, 경제 인플루언서 위주로 추림.
+    </div>
+
+    <h4 style="color:var(--accent);margin:28px 0 12px;font-size:15px;letter-spacing:.02em;">📈 재테크 인스타툰 작가 (6명)</h4>
+    <div class="map">
+      <div class="map-card">
+        <span class="verify">✅ 1만+</span>
+        <span class="badge badge-money">재테크툰</span>
+        <div class="handle">@donsil_munji</div>
+        <div class="name">돈실먼지<small>20대 1억 모은 N잡러 인스타툰 작가</small></div>
+        <div class="stats"><span>📈 <b>4만+</b></span><span>🖍️ 손그림</span><span>📖 N잡 스토리</span></div>
+        <p class="why">"20대 사회초년생 1억 모으기" 컨셉. <b>관계형 스토리</b> 패턴의 정수. 자체 가계부 제작·판매까지. <a href="https://www.instagram.com/donsil_munji/" target="_blank">방문 ↗</a></p>
+      </div>
+      <div class="map-card">
+        <span class="verify">✅ 1만+</span>
+        <span class="badge badge-money">재테크툰 · N잡</span>
+        <div class="handle">@hibi_heebee</div>
+        <div class="name">히비<small>재테크 인스타툰 · N잡 부수입</small></div>
+        <div class="stats"><span>📈 <b>75K</b></span><span>💰 부수입</span><span>📚 실용 정보</span></div>
+        <p class="why">"현실적으로 돈 버는 이야기". N잡 다양한 시도를 만화로. <b>실패담까지 그리는 솔직함</b>이 차별화. <a href="https://www.instagram.com/hibi_heebee/" target="_blank">방문 ↗</a></p>
+      </div>
+      <div class="map-card">
+        <span class="verify">✅ 1만+</span>
+        <span class="badge badge-money">짠테크</span>
+        <div class="handle">@mijjan_storyy</div>
+        <div class="name">미짠<small>짠테크 · 절약 · 재테크</small></div>
+        <div class="stats"><span>📝 텍스트형 카드</span><span>💸 절약 팁</span><span>🏆 검증 활성</span></div>
+        <p class="why">실생활 절약 팁을 흰배경+간결 타이포로. <b>정보형 리스트 카드뉴스의 표준</b>. <a href="https://www.instagram.com/mijjan_storyy/" target="_blank">방문 ↗</a></p>
+      </div>
+      <div class="map-card">
+        <span class="verify">✅ 1만+</span>
+        <span class="badge badge-money">짠테크 · 직장인</span>
+        <div class="handle">@jjan_daeri</div>
+        <div class="name">짠대리<small>직장인 부수입·재테크 정보</small></div>
+        <div class="stats"><span>💼 직장인 페르소나</span><span>📊 부수입</span><span>🎯 좁은 타겟</span></div>
+        <p class="why">"직장인"이라는 좁은 페르소나에 집중. 페르소나 일관성이 핵심 차별화. <a href="https://www.instagram.com/jjan_daeri/" target="_blank">방문 ↗</a></p>
+      </div>
+      <div class="map-card">
+        <span class="verify">✅ 1만+</span>
+        <span class="badge badge-money">짠테크</span>
+        <div class="handle">@hollycap13</div>
+        <div class="name">짠테크<small>대학생 짠테크 일상</small></div>
+        <div class="stats"><span>🎓 학생 페르소나</span><span>📱 공강시간 운영</span><span>💡 미니 팁</span></div>
+        <p class="why">"공강시간입니다"로 시작하는 대학생 짠테크 톤. 또래 공감 + 친근감. <a href="https://www.instagram.com/hollycap13/" target="_blank">방문 ↗</a></p>
+      </div>
+      <div class="map-card">
+        <span class="verify">✅ 1만+</span>
+        <span class="badge badge-money">재테크툰</span>
+        <div class="handle">@meongtoon</div>
+        <div class="name">믕툰<small>인스타툰 · 일상 + 재테크</small></div>
+        <div class="stats"><span>🎨 일상툰</span><span>💸 재테크 결합</span><span>📖 시리즈</span></div>
+        <p class="why">일상툰 형식에 재테크 메시지를 자연스럽게 녹임. <b>정보+관계</b> 결합 사례. <a href="https://www.instagram.com/meongtoon/" target="_blank">방문 ↗</a></p>
+      </div>
+    </div>
+
+    <h4 style="color:var(--accent);margin:28px 0 12px;font-size:15px;letter-spacing:.02em;">🎨 대형 인스타툰 (직접 재테크X, 톤 참고용 3명)</h4>
+    <div class="map">
+      <div class="map-card">
+        <span class="verify">✅ 1만+</span>
+        <span class="badge badge-mz">대형 인스타툰</span>
+        <div class="handle">@keykney</div>
+        <div class="name">키크니<small>62만 · "무엇이든 그려드립니다"</small></div>
+        <div class="stats"><span>📈 <b>62만</b></span><span>🏆 1위급 작가</span><span>🎨 소통형</span></div>
+        <p class="why">팬 사연 → 즉시 만화화. <b>IP·소통·시리즈성의 정수</b>. 재테크는 아니지만 톤 표준. <a href="https://www.instagram.com/keykney/" target="_blank">방문 ↗</a></p>
+      </div>
+      <div class="map-card">
+        <span class="verify">✅ 1만+</span>
+        <span class="badge badge-mz">일상툰</span>
+        <div class="handle">@2soom_toon</div>
+        <div class="name">이숨<small>168K · 일상 인스타툰</small></div>
+        <div class="stats"><span>📈 <b>168K</b></span><span>🎨 감성 일상</span><span>📱 시리즈</span></div>
+        <p class="why">감성 일상툰. 캐릭터 일관성 + 시리즈 IP 활용법 참고. <a href="https://www.instagram.com/2soom_toon/" target="_blank">방문 ↗</a></p>
+      </div>
+      <div class="map-card">
+        <span class="verify">✅ 1만+</span>
+        <span class="badge badge-mz">일상툰 · 퇴사</span>
+        <div class="handle">@illust_jk</div>
+        <div class="name">퇴사원J (정인)<small>111K · 퇴사·일상 일러스트</small></div>
+        <div class="stats"><span>📈 <b>111K</b></span><span>💼 퇴사 컨셉</span><span>🖍️ 일러스트</span></div>
+        <p class="why">"퇴사원"이라는 좁은 페르소나 IP. 직장 탈출/N잡 연관 콘텐츠에 참고. <a href="https://www.instagram.com/illust_jk/" target="_blank">방문 ↗</a></p>
+      </div>
+    </div>
+
+    <h4 style="color:var(--accent);margin:28px 0 12px;font-size:15px;letter-spacing:.02em;">📊 경제·주식 인플루언서 (2명)</h4>
+    <div class="map">
+      <div class="map-card">
+        <span class="verify">✅ 1만+</span>
+        <span class="badge badge-money">경제 인플루언서</span>
+        <div class="handle">@syukaworld</div>
+        <div class="name">슈카친구들<small>113K · 슈카월드 공식</small></div>
+        <div class="stats"><span>📈 <b>113K</b></span><span>📺 유튜브 연계</span><span>🏢 전 펀드매니저</span></div>
+        <p class="why">유튜브 슈카월드의 인스타. <b>경제 인플루언서 인스타 운영의 표준</b>. 유튜브 콘텐츠를 카드뉴스로 재편집. <a href="https://www.instagram.com/syukaworld/" target="_blank">방문 ↗</a></p>
+      </div>
+      <div class="map-card">
+        <span class="verify">✅ 1만+</span>
+        <span class="badge badge-mz">IT · 재테크 결합</span>
+        <div class="handle">@itgodgo</div>
+        <div class="name">강기웅<small>IT 인플루언서</small></div>
+        <div class="stats"><span>💻 IT 전문</span><span>📱 가젯·앱 리뷰</span><span>🎯 실명 운영</span></div>
+        <p class="why">IT + 생산성 + 부수입 결합 패턴. <b>실명 + 전문성 + 일상</b> 결합의 사례. <a href="https://www.instagram.com/itgodgo/" target="_blank">방문 ↗</a></p>
+      </div>
+    </div>
+
+    <h4 style="color:var(--accent);margin:28px 0 12px;font-size:15px;letter-spacing:.02em;">🏠 부동산 · 청약 (4명)</h4>
+    <div class="map">
+      <div class="map-card">
+        <span class="verify">✅ 1만+</span>
+        <span class="badge" style="background:rgba(123,232,177,.15);color:var(--accent-3);border:1px solid rgba(123,232,177,.3);">부동산 · 최대형</span>
+        <div class="handle">@bunyang_tong</div>
+        <div class="name">분양통<small>669K · 청약·정부지원금 정보</small></div>
+        <div class="stats"><span>📈 <b>669K</b></span><span>🏆 부동산 1위</span><span>💰 정부지원금</span></div>
+        <p class="why"><b>부동산 카테고리 최대 인플루언서.</b> 청약·분양·청년할인 정보 카드뉴스의 표준. 한국 인스타 재테크 전체에서 최상위 팔로워. <a href="https://www.instagram.com/bunyang_tong/" target="_blank">방문 ↗</a></p>
+      </div>
+      <div class="map-card">
+        <span class="verify">✅ 1만+</span>
+        <span class="badge" style="background:rgba(123,232,177,.15);color:var(--accent-3);border:1px solid rgba(123,232,177,.3);">럭셔리 부동산</span>
+        <div class="handle">@no1luxurynhouse</div>
+        <div class="name">럭셔리앤하우스<small>176K · 럭셔리 부동산 중개</small></div>
+        <div class="stats"><span>📈 <b>176K</b></span><span>🏘️ 럭셔리 매물</span><span>📸 사진 위주</span></div>
+        <p class="why">럭셔리 매물 사진+영상 위주. <b>이미지 중심 카드뉴스</b>의 사례 (텍스트 적은 카드뉴스 참고용). <a href="https://www.instagram.com/no1luxurynhouse/" target="_blank">방문 ↗</a></p>
+      </div>
+      <div class="map-card">
+        <span class="verify">✅ 1만+</span>
+        <span class="badge" style="background:rgba(123,232,177,.15);color:var(--accent-3);border:1px solid rgba(123,232,177,.3);">분양 정보</span>
+        <div class="handle">@1_bbunyang</div>
+        <div class="name">1분분양<small>전국 분양 정보</small></div>
+        <div class="stats"><span>⏱️ 1분 컨셉</span><span>🏘️ 전국 분양</span><span>📋 정보 압축</span></div>
+        <p class="why">"1분"이라는 시간 약속을 브랜드명에 박은 사례. <b>정보형 카드뉴스의 압축 패턴</b>. <a href="https://www.instagram.com/1_bbunyang/" target="_blank">방문 ↗</a></p>
+      </div>
+      <div class="map-card">
+        <span class="verify">✅ 1만+</span>
+        <span class="badge" style="background:rgba(123,232,177,.15);color:var(--accent-3);border:1px solid rgba(123,232,177,.3);">청약 · 부린이</span>
+        <div class="handle">@bukkume</div>
+        <div class="name">부꾸미<small>부동산 분양·청약 정보</small></div>
+        <div class="stats"><span>🏘️ 부린이 타겟</span><span>📋 청약 가이드</span><span>💡 친근 톤</span></div>
+        <p class="why">"부꾸미"라는 캐릭터/마스코트 톤. 부린이(부동산 초보) 페르소나 직접 타겟. <a href="https://www.instagram.com/bukkume/" target="_blank">방문 ↗</a></p>
+      </div>
+    </div>
+
+    <h4 style="color:var(--accent);margin:28px 0 12px;font-size:15px;letter-spacing:.02em;">💼 재테크 교육 · 커뮤니티 (1팀)</h4>
+    <div class="map">
+      <div class="map-card">
+        <span class="verify">✅ 1만+</span>
+        <span class="badge badge-money">교육 플랫폼</span>
+        <div class="handle">@weolbu_official</div>
+        <div class="name">월급쟁이부자들<small>389K · 너나위 등 강사진</small></div>
+        <div class="stats"><span>📈 <b>389K</b></span><span>🎓 1위 재테크 교육</span><span>📺 유튜브 연계</span></div>
+        <p class="why">유튜브+커뮤니티+카페+교육의 통합 IP. <b>너나위(전 직장인→경제적 자유)</b>가 대표 강사. 개인 → 팀 → 플랫폼 진화의 사례. <a href="https://www.instagram.com/weolbu_official/" target="_blank">방문 ↗</a></p>
+      </div>
+    </div>
+
+    <div class="note warn">
+      <b>⚠️ 코인 단타·차트분석 개인 계정 — 왜 명단에 없나</b><br/>
+      이 카테고리는 ① 검증된 활성 1만+ 한국 개인 인스타 계정이 매우 드물고 ② 있더라도 대부분 텔레그램/리딩방으로 유인하는 형태라 카드뉴스 분석 가치보다 사기 위험이 압도적 ③ "월 ○억 수익 인증" 같은 콘텐츠는 거의 모두 조작 ④ 진짜 트레이더(예: 불장단타왕)는 유튜브 본진 + 인스타는 부수적인 경우가 대부분.<br/><br/>
+      <b>그래서 솔직히:</b> 코인 단타 카드뉴스 디자인을 분석하고 싶다면, <b>업비트 공식(@upbit_official)의 보안·교육 카드뉴스</b>나 <b>금감원(@fsskorea)의 사기 예방 카드뉴스</b>가 훨씬 안전하고 디자인 학습 가치도 높습니다.
+    </div>
+
+    <div class="note">
+      <b>💡 이 16개 계정을 분석 사례로 활용하는 법</b><br/>
+      ① <b>인스타툰형 6명</b> (돈실먼지·히비·미짠·짠대리·짠테크·믕툰) = "정보+관계+캐릭터" 결합 패턴 비교 분석.<br/>
+      ② <b>대형 인스타툰 3명</b> (키크니·이숨·퇴사원J) = 페르소나 IP·시리즈 일관성 학습용. 직접 재테크 아니지만 톤 참고.<br/>
+      ③ <b>경제 2명</b> (슈카·강기웅) = 유튜브/실명 자산 + 인스타 운영의 콜라보 방식.<br/>
+      ④ <b>부동산 4명</b> (분양통·럭셔리앤하우스·1분분양·부꾸미) = 정보형 카드뉴스 + 부린이 페르소나 타겟팅 비교.<br/>
+      ⑤ <b>월급쟁이부자들</b> = 개인 IP → 팀 → 플랫폼 진화의 한국 대표 케이스. v2 리포트의 "차별화 7가지" 모두 충족.
+    </div>
+  </div>
+</section>
+
+<!-- ============== DESIGN PATTERNS ============== -->
+<section>
+  <div class="container">
+    <h2><span class="num">05</span>디자인 패턴 7가지 — 실물 모형</h2>
+    <p class="sub">실제 한국 카드뉴스에서 자주 보이는 첫 장 디자인 7개 유형. 각 패턴이 어떤 카테고리에 잘 맞는지까지.</p>
+
+    <div class="pattern-grid">
+
+      <div class="pattern">
+        <div class="mock">
+          <div class="insta-card style-uppity">
+            <div class="stamp">UPPITY · 머니레터</div>
+            <h4>금리 인하<br/>그래서 어디에<br/>돈을 둘까?</h4>
+            <div class="num">01</div>
+            <div class="swipe"><i class="on"></i><i></i><i></i><i></i><i></i></div>
+          </div>
+        </div>
+        <div class="info">
+          <span class="tag">PATTERN A — BOLD MONO</span>
+          <h3>옐로우 + 블랙 + 거대 헤드라인</h3>
+          <p>어피티 시그니처. 단색 배경에 검은 헤드 폰트로 메시지 단 하나만 던진다. 모바일 피드에서 시선을 강제로 멈추게 하는 가장 강력한 패턴.</p>
+          <ul>
+            <li><b>색감</b>: 1색 배경 + 1색 텍스트 (대비 8:1+)</li>
+            <li><b>폰트</b>: G마켓산스 / 프리텐다드 ExtraBold</li>
+            <li><b>활용</b>: 재테크, 경제, 정책 이슈</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="pattern">
+        <div class="mock">
+          <div class="insta-card style-newneek">
+            <div class="stamp">NEWNEEK</div>
+            <h4>오늘은 미국<br/>금리 발표하는 날.<br/>슴슴아 정리해줘 🦔</h4>
+            <div class="hedgehog"></div>
+            <div class="swipe"><i class="on"></i><i></i><i></i><i></i></div>
+          </div>
+        </div>
+        <div class="info">
+          <span class="tag">PATTERN B — MASCOT BRAND</span>
+          <h3>마스코트 + 친구 톤 카피</h3>
+          <p>뉴닉의 '고슴이'처럼 캐릭터가 매번 등장. "친구가 말해주는" 어투로 진입 장벽을 낮춘다. <b>AI 양산이 흉내 어려운 차별화 요소.</b></p>
+          <ul>
+            <li><b>색감</b>: 따뜻한 베이지/크림 + 시그니처 옐로우</li>
+            <li><b>폰트</b>: Gowun Dodum, 부드러운 한글 폰트</li>
+            <li><b>활용</b>: 시사 해설, 정보 전달</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="pattern">
+        <div class="mock">
+          <div class="insta-card style-money">
+            <div class="stamp">💰 MONEY TIP</div>
+            <div class="price">+87만원</div>
+            <h4>월급쟁이가<br/>1년 만에 만든<br/>비상금</h4>
+            <div class="sub">실수령 280만원 기준</div>
+            <div class="swipe"><i class="on"></i><i></i><i></i><i></i><i></i><i></i></div>
+          </div>
+        </div>
+        <div class="info">
+          <span class="tag">PATTERN C — DARK + NUMBER</span>
+          <h3>검정 배경 + 숫자 임팩트</h3>
+          <p>"+87만원" 같이 <b>구체 숫자</b>를 거대하게 띄우는 패턴. 단, 숫자 옆에 "실수령 280만원 기준" 같이 <b>맥락 한 줄</b>이 있어야 신뢰감.</p>
+          <ul>
+            <li><b>색감</b>: 다크 그라데이션 + 골드/옐로우 포인트</li>
+            <li><b>폰트</b>: 숫자는 굵게, 본문은 얇게</li>
+            <li><b>활용</b>: 절약·부업·주식 결과 인증</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="pattern">
+        <div class="mock">
+          <div class="insta-card style-careet">
+            <div class="stamp">이주의 유행템</div>
+            <h4>요즘 MZ가<br/>다 들고다니는<br/>그것 ↗</h4>
+            <div class="deco">✨</div>
+            <div class="swipe"><i class="on"></i><i></i><i></i><i></i><i></i></div>
+          </div>
+        </div>
+        <div class="info">
+          <span class="tag">PATTERN D — PASTEL MZ</span>
+          <h3>파스텔 그라데이션 + 호기심</h3>
+          <p>캐릿 시그니처. 핑크-옐로우 그라데이션 + "그것", "그곳" 같은 의도 모호화 카피로 클릭을 강제. <b>시리즈물 정기 발행</b>이 핵심.</p>
+          <ul>
+            <li><b>색감</b>: 핑크/라벤더/옐로우 그라데이션</li>
+            <li><b>폰트</b>: Black Han Sans + 이모지</li>
+            <li><b>활용</b>: 트렌드, 라이프스타일, 신상</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="pattern">
+        <div class="mock">
+          <div class="insta-card style-question">
+            <div class="q">Q.</div>
+            <h4>당신이 <em>매달</em><br/>그냥 흘려보내는 돈,<br/>얼마인지 아세요?</h4>
+            <div class="swipe"><i class="on"></i><i></i><i></i><i></i></div>
+          </div>
+        </div>
+        <div class="info">
+          <span class="tag">PATTERN E — QUESTION HOOK</span>
+          <h3>질문 + 명조체 + 베이지</h3>
+          <p>"~ 아세요?" 직접적 질문으로 자기점검을 유발. 베이지/우드 톤 + 명조체로 신뢰감을 입힌다.</p>
+          <ul>
+            <li><b>색감</b>: 베이지/오프화이트 + 우드 톤</li>
+            <li><b>폰트</b>: 나눔명조 / 마루부리</li>
+            <li><b>활용</b>: 자산진단, 절약 점검, 보험·연금</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="pattern">
+        <div class="mock">
+          <div class="insta-card style-family">
+            <div class="stamp">아빠가 알려주는</div>
+            <h4>"딸아,<br/>월급이 모이지 않는 건<br/>네 잘못이 아니야."</h4>
+            <div class="quote">— 복희씨네 가족 #07</div>
+            <div class="swipe"><i class="on"></i><i></i><i></i><i></i><i></i><i></i></div>
+          </div>
+        </div>
+        <div class="info">
+          <span class="tag">PATTERN F — STORY IP <span style="color:var(--accent-3);">★ 2026</span></span>
+          <h3>관계형 카피 + 따뜻한 톤</h3>
+          <p>복희씨네 가족 류 신흥 패턴. <b>"누가 누구에게"</b>를 톤에 직접 박아넣음. 정보의 전문성보다 관계의 친밀감이 알고리즘에서 폭증.</p>
+          <ul>
+            <li><b>색감</b>: 베이지·우드·따뜻한 그라데이션</li>
+            <li><b>폰트</b>: 명조 + 따옴표</li>
+            <li><b>활용</b>: 재테크·육아·교육 (관계 기반)</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="pattern">
+        <div class="mock">
+          <div class="insta-card style-news">
+            <div class="header"><span>BREAKING</span><span>05.28</span></div>
+            <div class="body">
+              <h4>한은, <mark>기준금리</mark><br/><mark>0.25%p 인하</mark><br/>3년 만에 첫 인하</h4>
+              <div class="source">출처: 한국은행 5월 금통위</div>
+            </div>
+            <div class="swipe"><i class="on"></i><i></i><i></i><i></i><i></i><i></i></div>
+          </div>
+        </div>
+        <div class="info">
+          <span class="tag">PATTERN G — NEWS HIGHLIGHT</span>
+          <h3>흰배경 + 형광 하이라이트 박스</h3>
+          <p>언론사·시사 카드뉴스 표준. 흰 배경 + 옐로우/레드 형광 마크 + <b>출처 명시</b>는 필수. 신뢰 카테고리에서 압도적.</p>
+          <ul>
+            <li><b>색감</b>: 화이트 + 블랙 + 옐로우 마크</li>
+            <li><b>폰트</b>: 산세리프 헤드 + 출처 캡션</li>
+            <li><b>활용</b>: 속보, 정책 발표, 데이터 인용</li>
+          </ul>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ============== DIFFERENTIATION 7 ============== -->
+<section>
+  <div class="container">
+    <h2><span class="num">06</span>AI로 양산해도 패널티 안 받는 7가지 차별화소 <span class="new">CORE</span></h2>
+    <p class="sub">AI 도구(Canva Bulk, Mirra, Carat) 다 써도 좋습니다. 단, 이 7가지 중 최소 3개는 사람이 직접 박아 넣어야 노출됩니다.</p>
+
+    <div class="diff-grid">
+
+      <div class="diff">
+        <div class="n">01</div>
+        <h3><span class="ic">P</span>한 문장 포지셔닝</h3>
+        <p>"누가 / 누구에게 / 무엇을" 한 문장으로 답할 수 있어야 한다. 이 한 줄이 곧 알고리즘이 당신을 분류하는 키워드.</p>
+        <div class="compare">
+          <div class="bad-c"><b>✗ AI 양산</b>"재테크 정보 모음" "돈 모으는 법"</div>
+          <div class="good-c"><b>✓ 차별화</b>"아버지가 30대 딸에게 알려주는 진짜 투자"</div>
+        </div>
+      </div>
+
+      <div class="diff">
+        <div class="n">02</div>
+        <h3><span class="ic">T</span>좁은 페르소나 1명</h3>
+        <p>모두를 향한 콘텐츠는 누구에게도 도달하지 않는다. 페르소나 1명을 정해 그 사람에게만 말하듯.</p>
+        <div class="compare">
+          <div class="bad-c"><b>✗</b>"직장인", "사회초년생"</div>
+          <div class="good-c"><b>✓</b>"월 300버는데 청약통장 없는 28세 회사원"</div>
+        </div>
+      </div>
+
+      <div class="diff">
+        <div class="n">03</div>
+        <h3><span class="ic">S</span>정보 + 관계의 결합</h3>
+        <p>정보만 던지면 AI가 더 잘한다. 그 정보에 <b>관계·감정·맥락</b>을 입혀야 사람의 콘텐츠가 된다.</p>
+        <div class="compare">
+          <div class="bad-c"><b>✗</b>"청약 4가지 종류"</div>
+          <div class="good-c"><b>✓</b>"아버지가 제 청약 선택 도와주신 과정 (실수 포함)"</div>
+        </div>
+      </div>
+
+      <div class="diff">
+        <div class="n">04</div>
+        <h3><span class="ic">D</span>Decision Framing</h3>
+        <p>2026년 사용자가 진짜 원하는 것 = <b>"내 상황엔 뭘 선택할까"</b>의 기준. 나열이 아니라 분기.</p>
+        <div class="compare">
+          <div class="bad-c"><b>✗</b>"적금 vs 예금 vs CMA 비교"</div>
+          <div class="good-c"><b>✓</b>"3개월 안에 쓸 돈이라면 CMA / 1년 이상이면 예금"</div>
+        </div>
+      </div>
+
+      <div class="diff">
+        <div class="n">05</div>
+        <h3><span class="ic">V</span>일관된 관점/목소리</h3>
+        <p>모든 게시물에서 같은 사람의 같은 관점이 느껴져야 한다. 어조·평가 기준이 매 게시물마다 다르면 AI 양산처럼 보임.</p>
+        <div class="compare">
+          <div class="bad-c"><b>✗</b>매번 다른 톤, 무난한 결론</div>
+          <div class="good-c"><b>✓</b>"나는 항상 보장이 더 중요하다고 봅니다"</div>
+        </div>
+      </div>
+
+      <div class="diff">
+        <div class="n">06</div>
+        <h3><span class="ic">C</span>반복 IP (캐릭터·시리즈)</h3>
+        <p>고슴이(뉴닉), 부녀(복희씨네) 같이 매번 등장하는 IP가 있어야 시리즈가 되고 팔로우가 일어남.</p>
+        <div class="compare">
+          <div class="bad-c"><b>✗</b>매번 다른 디자인·등장인물</div>
+          <div class="good-c"><b>✓</b>"이주의 유행템" 매주 같은 시간 발행</div>
+        </div>
+      </div>
+
+      <div class="diff">
+        <div class="n">07</div>
+        <h3><span class="ic">E</span>진짜 경험·증거</h3>
+        <p>AI가 절대 못 가져오는 것 = <b>당신의 통장 캡처, 실제 영수증, 본인 사진, 가족 일화</b>. 이것 한 장이 카드 10장보다 강력.</p>
+        <div class="compare">
+          <div class="bad-c"><b>✗</b>"평균 가계부 시뮬레이션"</div>
+          <div class="good-c"><b>✓</b>"제 5월 카드값 명세서 캡처 (부끄럽지만)"</div>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="note">
+      <b>💡 핵심 룰 —</b> 위 7개 중 <b>3개 이상</b>이 한 콘텐츠에 들어가면 AI 양산 패턴에서 벗어난다. 4개 이상이면 차별화 콘텐츠, 5개 이상이면 시리즈 IP로 성장 가능. 복희씨네 가족은 1,2,3,5,6,7번을 모두 충족.
+    </div>
+  </div>
+</section>
+
+<!-- ============== COPY FORMULAS ============== -->
+<section>
+  <div class="container">
+    <h2><span class="num">07</span>카피라이팅 — 후킹 제목 공식 11개</h2>
+    <p class="sub">한국 인스타에서 통하는 첫 페이지 후킹 공식. 2026 인사이트로 ⑪ Decision Framing 추가.</p>
+
+    <div class="copy-grid">
+
+      <div class="copy">
+        <div class="id">01</div>
+        <span class="name">CURIOSITY GAP</span>
+        <h3>왜 ~ 해야 하는가</h3>
+        <p class="formula">[행동]을 ~해야 하는 이유</p>
+        <p class="ex"><b>예시 ▸</b> "지금 당장 청약통장 만들어야 하는 이유"</p>
+        <p class="why">정답을 보여주지 않고 궁금증으로 끌어들임. 가장 보편적이고 확실한 공식.</p>
+      </div>
+
+      <div class="copy">
+        <div class="id">02</div>
+        <span class="name">SCARCITY</span>
+        <h3>지금이 ~ 좋은 시기</h3>
+        <p class="formula">지금이 [대상]을 [동사]하기 좋은 시기</p>
+        <p class="ex"><b>예시 ▸</b> "지금이 미국 ETF 사기 좋은 시기"</p>
+        <p class="why">희소성+타이밍. FOMO 심리를 자극해 즉시 저장하게 만든다.</p>
+      </div>
+
+      <div class="copy">
+        <div class="id">03</div>
+        <span class="name">SECRET</span>
+        <h3>나만 알고 싶은</h3>
+        <p class="formula">나만 알고 싶은 [대상]</p>
+        <p class="ex"><b>예시 ▸</b> "나만 알고 싶은 청년 정부지원금"</p>
+        <p class="why">비밀·특권 프레이밍. 공개 정보지만 "내가 발견한 듯한" 우월감을 유발.</p>
+      </div>
+
+      <div class="copy">
+        <div class="id">04</div>
+        <span class="name">NUMBER LIST</span>
+        <h3>~한 N가지</h3>
+        <p class="formula">[대상]을 위한 [숫자]가지 [무엇]</p>
+        <p class="ex"><b>예시 ▸</b> "월급쟁이 꼭 알아야 할 7가지 절세"</p>
+        <p class="why">정보형 표준. 숫자가 작을수록 클릭률↑, 클수록 저장률↑.</p>
+      </div>
+
+      <div class="copy">
+        <div class="id">05</div>
+        <span class="name">QUESTION</span>
+        <h3>당신은 ~ 하시나요?</h3>
+        <p class="formula">당신/너 [상황]에 [확인 질문]</p>
+        <p class="ex"><b>예시 ▸</b> "당신 통장에 비상금 6개월치 있나요?"</p>
+        <p class="why">자기점검 유발 → 댓글 답변 유도. 알고리즘이 좋아하는 댓글 활성도.</p>
+      </div>
+
+      <div class="copy">
+        <div class="id">06</div>
+        <span class="name">CONTRAST</span>
+        <h3>~인 줄 알았는데 사실은</h3>
+        <p class="formula">[일반 통념]인 줄 알았는데, 사실은 [반전]</p>
+        <p class="ex"><b>예시 ▸</b> "예금이 안전한 줄 알았는데... 진짜 잃는 돈"</p>
+        <p class="why">선입견 깨기. 통념과 다른 정보는 인지부조화로 끝까지 읽게 만든다.</p>
+      </div>
+
+      <div class="copy">
+        <div class="id">07</div>
+        <span class="name">LOSS WARN</span>
+        <h3>~ 모르면 손해</h3>
+        <p class="formula">[정보]를 모르면 [구체 손실]</p>
+        <p class="ex"><b>예시 ▸</b> "이 한 줄 모르면 연말정산 30만원 손해"</p>
+        <p class="why">손실 회피 본능 활용. 이득보다 손실이 2배 강력하다.</p>
+      </div>
+
+      <div class="copy">
+        <div class="id">08</div>
+        <span class="name">CONFESSION</span>
+        <h3>~ 했더니 ~ 됐다</h3>
+        <p class="formula">[행동]을 [기간] 했더니 [구체 결과]</p>
+        <p class="ex"><b>예시 ▸</b> "1년 동안 가계부 안 썼더니 600만원 사라짐"</p>
+        <p class="why">결과 인증형. 구체 숫자+기간이 있으면 실현 가능성으로 받아들여 저장.</p>
+      </div>
+
+      <div class="copy">
+        <div class="id">09</div>
+        <span class="name">SHOCK</span>
+        <h3>~ 이렇게 많았다고?</h3>
+        <p class="formula">[대상이] 이렇게 [수식어]였다고?</p>
+        <p class="ex"><b>예시 ▸</b> "한국 직장인 평균 자산이 이 정도였다고?"</p>
+        <p class="why">의외성 후킹. 자신이 모르고 있었다는 느낌이 강할수록 끝까지 본다.</p>
+      </div>
+
+      <div class="copy">
+        <div class="id">10</div>
+        <span class="name">EXCLUSIVE TAG</span>
+        <h3>~만 보세요</h3>
+        <p class="formula">[특정 타겟]만 보세요/저장하세요</p>
+        <p class="ex"><b>예시 ▸</b> "사회초년생만 저장하세요"</p>
+        <p class="why">타겟팅 후킹. 해당되는 사람에게는 '내 얘기'가 되어 저장률 폭증.</p>
+      </div>
+
+      <div class="copy new-formula">
+        <div class="id">11</div>
+        <span class="name">DECISION FRAMING</span>
+        <h3>A인지 B인지, 이렇게 판단하세요</h3>
+        <p class="formula">[상황]이라면 → [선택A] / [다른 상황]이라면 → [선택B]</p>
+        <p class="ex"><b>예시 ▸</b> "3개월 안에 쓸 돈이라면 CMA, 1년 이상이면 정기예금"</p>
+        <p class="ex"><b>예시 ▸</b> "월 300 이하면 청년적금, 그 이상이면 ISA부터"</p>
+        <p class="why"><b>2026 핵심.</b> AI가 "X 5가지" 같은 나열은 무한정 만들지만, "내 상황에 맞는 선택 기준"은 사람만이 정리할 수 있다. 저장률 압도적 1위.</p>
+      </div>
+
+    </div>
+
+    <div class="note">
+      <b>💡 카피의 진짜 규칙 —</b> 2026년엔 <b>⑪ Decision Framing을 다른 공식과 결합</b>하는 게 가장 강력. 예) ④ NUMBER LIST + ⑪ DECISION = "내 상황별 통장 5종 — 어떤 게 나에게 맞을까?". 정보의 양보다 정보의 적용 기준이 핵심.
+    </div>
+  </div>
+</section>
+
+<!-- ============== STORYTELLING STRUCTURE ============== -->
+<section>
+  <div class="container">
+    <h2><span class="num">08</span>스토리텔링 구조 — 페이지 흐름 설계</h2>
+    <p class="sub">2026 캐러셀이 20장까지 늘면서 구조 설계 여유가 생겼지만, 본질은 같습니다.</p>
+
+    <div class="story-flow">
+      <div class="story-step"><div class="n">1</div><h4>후킹</h4><p>0.5초 안에 멈추게.</p></div>
+      <div class="story-step"><div class="n">2</div><h4>공감/문제</h4><p>"이런 경험 있죠?"</p></div>
+      <div class="story-step"><div class="n">3</div><h4>본론/해답</h4><p>한 장당 한 메시지.</p></div>
+      <div class="story-step"><div class="n">4</div><h4>증거/사례</h4><p>숫자·캡처·인용.</p></div>
+      <div class="story-step"><div class="n">5</div><h4>CTA</h4><p>저장·공유·다음 행동.</p></div>
+    </div>
+
+    <div class="struct-block">
+      <h3><span class="tag">재테크형</span>STRUCTURE A — "정보 압축형 (8~10장)"</h3>
+      <div class="pages">
+        <div class="page"><b>P1 HOOK</b><span>"월 30만원 더 모으는 5가지"</span></div>
+        <div class="page"><b>P2 공감</b><span>"분명 모았는데 통장에 없는…"</span></div>
+        <div class="page"><b>P3 TIP1</b><span>① 식비 자동 차단</span></div>
+        <div class="page"><b>P4 TIP2</b><span>② 구독료 정리</span></div>
+        <div class="page"><b>P5 TIP3</b><span>③ 알뜰폰 전환</span></div>
+        <div class="page"><b>P6 TIP4</b><span>④ 환급 정기 체크</span></div>
+        <div class="page"><b>P7 TIP5</b><span>⑤ 통신비 결합</span></div>
+        <div class="page"><b>P8 요약</b><span>5가지 한 페이지 정리</span></div>
+        <div class="page"><b>P9 CTA</b><span>"저장하고 따라하기"</span></div>
+      </div>
+      <p class="desc"><b>핵심:</b> 마지막에서 두 번째 장에 모든 팁을 한 페이지로 정리하면 <b>저장률이 1.8~2.5배</b> 증가.</p>
+    </div>
+
+    <div class="struct-block">
+      <h3><span class="tag">시사/이슈형</span>STRUCTURE B — "Q&A 해설형 (6~8장)"</h3>
+      <div class="pages">
+        <div class="page"><b>P1 HOOK</b><span>"금리 인하, 뭐가 달라지나"</span></div>
+        <div class="page"><b>P2 Q1</b><span>Q. 금리가 왜 내려가?</span></div>
+        <div class="page"><b>P3 A1</b><span>A. 경기 둔화 신호…</span></div>
+        <div class="page"><b>P4 Q2</b><span>Q. 그래서 내 대출은?</span></div>
+        <div class="page"><b>P5 A2</b><span>A. 6개월 안에 0.X% ↓</span></div>
+        <div class="page"><b>P6 Q3</b><span>Q. 예금 어떡할까?</span></div>
+        <div class="page"><b>P7 A3</b><span>A. 갈아탈 곳 3군데</span></div>
+        <div class="page"><b>P8 CTA</b><span>"내일 출근길 친구한테 ↗"</span></div>
+      </div>
+      <p class="desc"><b>핵심:</b> 어려운 시사를 <b>독자가 궁금해할 질문 순서</b>로 배치. 뉴닉이 압도적으로 잘하는 방식.</p>
+    </div>
+
+    <div class="struct-block">
+      <h3><span class="tag" style="background:var(--accent-3);">2026 NEW</span>STRUCTURE C — "Decision Tree 분기형 (10~14장)"</h3>
+      <div class="pages">
+        <div class="page"><b>P1 HOOK</b><span>"당신은 A형? B형?"</span></div>
+        <div class="page"><b>P2 진단</b><span>"3가지로 자가진단"</span></div>
+        <div class="page"><b>P3 분기점</b><span>"A형 → P4 / B형 → P7"</span></div>
+        <div class="page"><b>P4~P6</b><span>A형 솔루션</span></div>
+        <div class="page"><b>P7~P9</b><span>B형 솔루션</span></div>
+        <div class="page"><b>P10 비교</b><span>A vs B 한눈에</span></div>
+        <div class="page"><b>P11 매트릭스</b><span>한 페이지 요약</span></div>
+        <div class="page"><b>P12 CTA</b><span>"내 유형 댓글로 인증"</span></div>
+      </div>
+      <p class="desc"><b>핵심 (2026):</b> 사용자가 단순 정보가 아닌 <b>"내 상황에서의 선택"</b>을 원함. 20장 캐러셀의 위력 발휘. 댓글에 "나는 A!" 인증이 쌓이면 댓글 활성도 자동 폭증.</p>
+    </div>
+
+    <div class="struct-block">
+      <h3><span class="tag" style="background:var(--accent-3);">2026 RISING</span>STRUCTURE D — "관계형 스토리 (10~12장)"</h3>
+      <div class="pages">
+        <div class="page"><b>P1 HOOK</b><span>"딸아, 너 청약 어떻게 해?"</span></div>
+        <div class="page"><b>P2 상황</b><span>"퇴근하고 아빠 만남"</span></div>
+        <div class="page"><b>P3 갈등</b><span>"몰랐어요... 부끄"</span></div>
+        <div class="page"><b>P4~P8</b><span>아빠 설명 (한 컷씩)</span></div>
+        <div class="page"><b>P9 변화</b><span>"그래서 다음 날..."</span></div>
+        <div class="page"><b>P10 결론</b><span>"오늘의 교훈 3줄"</span></div>
+        <div class="page"><b>P11 CTA</b><span>"우리 아빠도 이런 말..?"</span></div>
+      </div>
+      <p class="desc"><b>핵심 (2026 RISING):</b> 복희씨네 가족 패턴. 정보를 <b>대화·관계·일상</b>에 녹임. AI가 흉내 가장 어려운 포맷. 댓글에 "우리 부모님도..." 공감 폭증.</p>
+    </div>
+
+  </div>
+</section>
+
+<!-- ============== ALGORITHM ============== -->
+<section>
+  <div class="container">
+    <h2><span class="num">09</span>알고리즘이 좋아하는 행동 유도 요소 — 2026판</h2>
+    <p class="sub">2026 인스타 알고리즘은 단순한 좋아요/공유 카운팅을 넘어 콘텐츠 오리지널리티·사용자 의사결정·프라이빗 신호를 봅니다.</p>
+
+    <div class="algo-grid">
+      <div class="algo new-2026">
+        <h3>오리지널리티</h3>
+        <span class="impact">영향도 ★★★★★ (최상)</span>
+        <div class="meter"><i style="width:98%"></i></div>
+        <p>2025년부터 가산점. <b>다른 계정 짜깁기·AI 양산 패턴 = 도달 패널티</b>. 출처 명시, 직접 캡처, 본인 사례가 신호.</p>
+      </div>
+      <div class="algo">
+        <h3>DM·스토리 공유</h3>
+        <span class="impact">영향도 ★★★★★</span>
+        <div class="meter"><i style="width:95%"></i></div>
+        <p><b>2026 1순위 신호.</b> 댓글보다 강함. Gen Z 77%가 프라이빗 공유 선호. "친구한테 보내주세요" CTA 필수.</p>
+      </div>
+      <div class="algo">
+        <h3>저장 (Save)</h3>
+        <span class="impact">영향도 ★★★★★</span>
+        <div class="meter"><i style="width:92%"></i></div>
+        <p>"나중에 보려고" 저장. 한 페이지 요약 슬라이드를 끼우면 폭발적으로 증가. 단, <b>2026엔 저장이 곧 구매 의도는 아님</b> — 결정 보류 신호로 재해석됨.</p>
+      </div>
+      <div class="algo new-2026">
+        <h3>완독률 (20장 시대)</h3>
+        <span class="impact">영향도 ★★★★☆</span>
+        <div class="meter"><i style="width:85%"></i></div>
+        <p>캐러셀 20장 확장으로 <b>긴 콘텐츠 완독률이 새 핵심 지표</b>로 부상. 8~12장이 완독률 최고점, 그 이상은 가치 높을 때만.</p>
+      </div>
+      <div class="algo">
+        <h3>체류 시간</h3>
+        <span class="impact">영향도 ★★★★☆</span>
+        <div class="meter"><i style="width:80%"></i></div>
+        <p>장당 한국어 40~80자가 스위트스팟. 너무 적으면 휙휙, 너무 많으면 이탈.</p>
+      </div>
+      <div class="algo">
+        <h3>댓글 (Comment)</h3>
+        <span class="impact">영향도 ★★★☆☆ (↓)</span>
+        <div class="meter"><i style="width:65%"></i></div>
+        <p>2026엔 위상 약간 하락 (DM 공유에 자리 내줌). 그래도 "당신 유형은?" 같은 자기 인증 질문은 효과적.</p>
+      </div>
+      <div class="algo new-2026">
+        <h3>프로필 방문 → 팔로우</h3>
+        <span class="impact">영향도 ★★★★☆</span>
+        <div class="meter"><i style="width:75%"></i></div>
+        <p>2026엔 단발 도달보다 <b>"이 계정에 머무는가"가 중요</b>. 카드뉴스에서 프로필 클릭 유도 + 프로필 첫 9개 그리드의 일관성 결정적.</p>
+      </div>
+      <div class="algo">
+        <h3>좋아요 (Like)</h3>
+        <span class="impact down">영향도 ★★☆☆☆</span>
+        <div class="meter"><i class="down" style="width:38%"></i></div>
+        <p>2025년부터 보조 신호로 격하. 좋아요만 많고 저장/공유 적으면 도달 안 늘어남.</p>
+      </div>
+      <div class="algo new-2026">
+        <h3>해시태그</h3>
+        <span class="impact down">영향도 ★★☆☆☆ (5개 제한)</span>
+        <div class="meter"><i class="down" style="width:30%"></i></div>
+        <p><b>2026 공식 변경:</b> 5개 이상 무효. 알고리즘이 캡션 본문·카드 안 텍스트를 직접 분석. 캡션 첫 1~2줄에 핵심 키워드 노출 필수.</p>
+      </div>
+    </div>
+
+    <div class="note">
+      <b>🔑 2026 한 줄 결론 —</b> 도달 = <b>오리지널리티 × DM공유 × 저장 × 완독률</b>의 곱. 한 가지만 떨어져도 노출이 안 늘어남. 캡션 끝에 <b>(1) 저장 명시 (2) 친구 DM 공유 유도 (3) 자기 유형 댓글 인증</b> 3종 깔기.
+    </div>
+  </div>
+</section>
+
+<!-- ============== AI TOOLS ============== -->
+<section>
+  <div class="container">
+    <h2><span class="num">10</span>AI 카드뉴스 제작 도구 비교 (2026) <span class="new">NEW</span></h2>
+    <p class="sub">잘 쓰면 시간 단축, 못 쓰면 패널티 시대. 한국어 자연스러움과 양산 패턴 회피가 선택 기준.</p>
+
+    <div class="tools-table">
+      <div class="tools-row head">
+        <div>도구</div>
+        <div>특징 & 한국어 처리</div>
+        <div>속도</div>
+        <div>유형</div>
+        <div>추천도</div>
+      </div>
+
+      <div class="tools-row">
+        <div class="name">미리캔버스<small>한국 토종 · 한국화 최강</small></div>
+        <div class="desc">한국적 색감, 한글 폰트, 한국 휴일/축제 반영 템플릿 풍부. AI 자동화 기능은 약하지만 <b>한국어 결과물이 가장 자연스러움</b>. 손으로 다듬기 좋은 도구.</div>
+        <div><span class="badge-tool kr">KR</span></div>
+        <div>템플릿 기반</div>
+        <div class="score">★★★★★</div>
+      </div>
+
+      <div class="tools-row">
+        <div class="name">Canva (+ Bulk Create)<small>글로벌 1위</small></div>
+        <div class="desc">디자인 자유도 압도적. <b>Bulk Create로 스프레드시트→대량 양산 가능</b>. 다만 양산 패턴 그대로 쓰면 알고리즘 패널티 위험. 한글 폰트는 유료에서 풍부.</div>
+        <div><span class="badge-tool gl">GLOBAL</span></div>
+        <div>템플릿 + AI</div>
+        <div class="score">★★★★☆</div>
+      </div>
+
+      <div class="tools-row">
+        <div class="name">Carat (캐럿)<small>한국 300만 가입자</small></div>
+        <div class="desc">채팅으로 카드뉴스/비디오/이미지 생성. 국내 점유율 1위 AI 에이전트. 빠르지만 결과물이 <b>전형적인 AI 톤</b>이라 그대로 올리면 양산 패턴.</div>
+        <div><span class="badge-tool kr">KR · AI</span></div>
+        <div>AI 채팅</div>
+        <div class="score">★★★★☆</div>
+      </div>
+
+      <div class="tools-row">
+        <div class="name">Mirra<small>3분에 10장 양산</small></div>
+        <div class="desc">속도 최강. 인스타·스레드·X 동시 발행 기능. 디자인 자유도는 낮지만 <b>대량 발행 워크플로</b>에 강함. 양산형 계정에 최적.</div>
+        <div><span class="badge-tool">SaaS</span></div>
+        <div>AI 자동화</div>
+        <div class="score">★★★☆☆</div>
+      </div>
+
+      <div class="tools-row">
+        <div class="name">Adobe Express<small>디자인 퀄리티 안정적</small></div>
+        <div class="desc">디자인 품질 가장 안정적, AI 기능 업데이트 빠름. 무료 플랜이 제한적이고 한국어 템플릿 적음. 글로벌 톤 콘텐츠에 적합.</div>
+        <div><span class="badge-tool gl">GLOBAL</span></div>
+        <div>디자인 + AI</div>
+        <div class="score">★★★☆☆</div>
+      </div>
+
+      <div class="tools-row">
+        <div class="name">망고보드<small>한국 폰트·요소 풍부</small></div>
+        <div class="desc">한국 폰트·아이콘·일러스트 가장 풍부. AI 자동화는 약함. 손수 디자인하는 1인 운영자에게 적합.</div>
+        <div><span class="badge-tool kr">KR</span></div>
+        <div>템플릿</div>
+        <div class="score">★★★☆☆</div>
+      </div>
+
+      <div class="tools-row">
+        <div class="name">Designs.ai<small>한글 부자연스러움</small></div>
+        <div class="desc">AI 자동화는 강하나 <b>한국어 결과물이 부자연</b>. 광범위한 재작업 필요. 현재 한국 시장 비추.</div>
+        <div><span class="badge-tool gl">GLOBAL</span></div>
+        <div>AI 우선</div>
+        <div class="score">★★☆☆☆</div>
+      </div>
+    </div>
+
+    <div class="note warn">
+      <b>⚠️ 도구를 어떻게 써야 패널티 안 받나 —</b><br/>
+      ❌ <b>금지:</b> Carat/Mirra가 뽑은 결과물을 손대지 않고 그대로 업로드 (= AI 양산 패턴 그대로 노출)<br/>
+      ✅ <b>권장:</b> AI로 초안 → 본인 톤·관점·실제 경험·캡처를 직접 박아넣어 재작성 (5장 중 최소 2장은 본인이 손)<br/>
+      ✅ <b>권장:</b> AI로 디자인 골격만 → 카피와 데이터는 사람이 작성<br/>
+      ✅ <b>권장:</b> 시리즈 IP·캐릭터·페르소나는 절대 AI에 위임하지 말 것 (= 차별화의 핵심)
+    </div>
+  </div>
+</section>
+
+<!-- ============== CASES ============== -->
+<section>
+  <div class="container">
+    <h2><span class="num">11</span>실제 계정 사례 분석</h2>
+    <p class="sub">검증된 활성 계정의 시그니처 톤을 CSS로 재현하고 4축으로 해부합니다.</p>
+
+    <div class="note info">
+      <b>📷 이미지 안내 —</b> 인스타는 외부 캡처가 제한돼서 각 계정의 시그니처 톤앤매너를 CSS로 재현한 모형을 사용했습니다. 사용자님이 분석할 구체 게시물 URL을 보내주시면, 아래 슬롯에 실제 스크린샷을 끼워넣고 분석을 추가합니다.
+    </div>
+
+    <!-- CASE 1: 어피티 -->
+    <div class="case">
+      <div class="visual">
+        <div class="insta-card style-uppity ratio45">
+          <div class="stamp">UPPITY · 머니레터</div>
+          <h4>이번 달<br/>월급, 어디로<br/>새고 있나요?</h4>
+          <div class="num">07</div>
+          <div class="swipe"><i class="on"></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+        </div>
+        <div class="caption">@uppity.official 시그니처 톤 재현</div>
+      </div>
+      <div class="info">
+        <div class="top">
+          <span class="handle">@uppity.official</span>
+          <span class="badge badge-money">재테크</span>
+          <span class="verify">✅ VERIFIED</span>
+        </div>
+        <h3>'월급은 어디로 새는가' — 자기점검 질문형 표지</h3>
+        <div class="analysis">
+          <div><b>디자인</b><span>옐로우 단색 + 블랙 헤드라인. G마켓산스 ExtraBold. 우하단 페이지 번호는 명조 워터마크.</span></div>
+          <div><b>카피 공식</b><span>⑤ QUESTION × ⑦ LOSS WARN</span></div>
+          <div><b>차별화소</b><span>P 한문장포지셔닝(2030 직장인) + V 일관관점</span></div>
+          <div><b>CTA</b><span>"이번 달 가계부 점검 ✅ 저장 / 친구 공유"</span></div>
+        </div>
+        <div class="quote">"강한 단색 + 거대 헤드 + 우하단 번호." — 어피티 패턴은 잡지 표지 문법을 인스타에 그대로 가져온 것이다.</div>
+      </div>
+    </div>
+
+    <!-- CASE 2: 뉴닉 -->
+    <div class="case">
+      <div class="visual">
+        <div class="insta-card style-newneek ratio45">
+          <div class="stamp">NEWNEEK</div>
+          <h4>오늘 미국이<br/>금리를 또 내렸어 🦔<br/>슴슴이가 정리해줄게</h4>
+          <div class="hedgehog"></div>
+          <div class="swipe"><i class="on"></i><i></i><i></i><i></i><i></i></div>
+        </div>
+        <div class="caption">@newneek.official 톤 재현</div>
+      </div>
+      <div class="info">
+        <div class="top">
+          <span class="handle">@newneek.official</span>
+          <span class="badge badge-issue">시사·뉴스</span>
+          <span class="verify">✅ VERIFIED</span>
+        </div>
+        <h3>마스코트 '고슴이' + 친구 톤 카피</h3>
+        <div class="analysis">
+          <div><b>디자인</b><span>크림 베이지 + 오렌지 톤 캐릭터. 부드러운 고운돋움 계열.</span></div>
+          <div><b>카피</b><span>해설 톤. "~줄게", "~지" 친구 어투.</span></div>
+          <div><b>차별화소</b><span>C 반복IP(고슴이) + V 일관관점 + S 정보+관계</span></div>
+          <div><b>CTA</b><span>"슴슴이랑 더 보고싶으면 팔로우 🔔"</span></div>
+        </div>
+        <div class="quote">"고슴이는 매번 옷을 갈아입는다." — 음식점 회계 이슈엔 사장님 옷, 유튜브 이슈엔 헤드폰. 일관성 속의 변주가 시리즈를 만든다.</div>
+      </div>
+    </div>
+
+    <!-- CASE 3: 캐릿 -->
+    <div class="case">
+      <div class="visual">
+        <div class="insta-card style-careet ratio45">
+          <div class="stamp">이주의 유행템</div>
+          <h4>요즘 MZ가<br/>다 들고 다니는<br/>'그것' ↗</h4>
+          <div class="deco">✨</div>
+          <div class="swipe"><i class="on"></i><i></i><i></i><i></i><i></i><i></i></div>
+        </div>
+        <div class="caption">@careet.official 톤 재현</div>
+      </div>
+      <div class="info">
+        <div class="top">
+          <span class="handle">@careet.official</span>
+          <span class="badge badge-mz">MZ 트렌드</span>
+          <span class="verify">✅ VERIFIED</span>
+        </div>
+        <h3>의도 모호화 + 파스텔 그라데이션</h3>
+        <div class="analysis">
+          <div><b>디자인</b><span>핑크-옐로우 그라데이션 + Black Han Sans + 이모지.</span></div>
+          <div><b>카피</b><span>의도 모호화 — '그것', '거기', '이거'.</span></div>
+          <div><b>차별화소</b><span>C 반복IP(이주의 ~ 시리즈) + V 일관관점</span></div>
+          <div><b>CTA</b><span>"다음 주도 놓치지 말기 → 팔로우"</span></div>
+        </div>
+        <div class="quote">"'그것'이라는 단어는 클릭 한 번을 만든다." — 명시하지 않는 것이 가장 강한 후킹이다.</div>
+      </div>
+    </div>
+
+    <!-- CASE 4: 복희씨네 -->
+    <div class="case">
+      <div class="visual">
+        <div class="insta-card style-family ratio45">
+          <div class="stamp">아빠가 알려주는</div>
+          <h4>"딸아,<br/>월급이 모이지 않는 건<br/>네 잘못이 아니야."</h4>
+          <div class="quote">— 복희씨네 가족 #07</div>
+          <div class="swipe"><i class="on"></i><i></i><i></i><i></i><i></i><i></i></div>
+        </div>
+        <div class="caption">복희씨네 가족 톤 재현</div>
+      </div>
+      <div class="info">
+        <div class="top">
+          <span class="handle">@복희씨네 가족</span>
+          <span class="badge badge-rising">2026 RISING</span>
+          <span class="verify">✅ 검증 사례</span>
+        </div>
+        <h3>관계 IP의 정수 — 28개로 3.4만 팔로워</h3>
+        <div class="analysis">
+          <div><b>디자인</b><span>베이지/우드 그라데이션 + 명조체 + 따옴표. 책 한 페이지 같은 톤.</span></div>
+          <div><b>카피</b><span>관계 직접 호명("딸아,"). 정보가 아닌 위로/대화.</span></div>
+          <div><b>차별화소</b><span><b>1,2,3,5,6,7 모두 충족</b> — 한문장포지셔닝 + 좁은타겟 + 정보+관계 + 일관관점 + 반복IP + 진짜경험</span></div>
+          <div><b>CTA</b><span>"우리 아빠도 이런 말 해주셨으면..." 댓글 폭증</span></div>
+        </div>
+        <div class="quote">"AI가 가장 못 만드는 것 = 아버지가 딸에게 말하는 톤." — 정보 자체는 흔하지만, 그것을 말하는 사람과 받는 사람의 관계가 새로움을 만든다.</div>
+      </div>
+    </div>
+
+    <!-- CASE 5: 머니멘토 -->
+    <div class="case">
+      <div class="visual">
+        <div class="insta-card style-money ratio45">
+          <div class="stamp">5초 룰</div>
+          <div class="price" style="font-size:36px;">미리보기</div>
+          <h4>이 카드뉴스에서<br/>당신이 얻을 것 →<br/>"청약 통장 선택 기준 3개"</h4>
+          <div class="sub" style="font-size:11px;">스와이프해서 확인 ↓</div>
+          <div class="swipe"><i class="on"></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+        </div>
+        <div class="caption">머니멘토 류 정보형 패턴</div>
+      </div>
+      <div class="info">
+        <div class="top">
+          <span class="handle">@머니멘토 류</span>
+          <span class="badge badge-rising">2026 RISING</span>
+          <span class="verify">✅ 검증 사례</span>
+        </div>
+        <h3>"5초 미리보기 + 즉시 CTA" 패턴</h3>
+        <div class="analysis">
+          <div><b>디자인</b><span>다크 + 골드. 첫 장에 "당신이 얻을 것" 명시.</span></div>
+          <div><b>카피</b><span>⑪ DECISION FRAMING — "선택 기준" 명시.</span></div>
+          <div><b>차별화소</b><span>D Decision Framing + P 한문장포지셔닝</span></div>
+          <div><b>결과</b><span>저장률·공유율 평소 2배. 주 300명+ 신규 팔로워.</span></div>
+        </div>
+        <div class="quote">"첫 장에 '이걸 보면 뭘 얻는지'를 5초 안에 보여주는 것." — 시간 절약을 약속하면 시간을 더 준다.</div>
+      </div>
+    </div>
+
+    <!-- CASE 6: 언론사 -->
+    <div class="case">
+      <div class="visual">
+        <div class="insta-card style-news ratio45">
+          <div class="header"><span>BREAKING</span><span>05.28</span></div>
+          <div class="body">
+            <h4>한은, <mark>기준금리</mark><br/><mark>0.25%p 인하</mark><br/><br/>3년 만에 첫 인하</h4>
+            <div class="source">출처: 한국은행 5월 금통위</div>
+          </div>
+          <div class="swipe"><i class="on"></i><i></i><i></i><i></i><i></i></div>
+        </div>
+        <div class="caption">언론사 시사 카드뉴스 패턴</div>
+      </div>
+      <div class="info">
+        <div class="top">
+          <span class="handle">언론사 인스타 (한겨레, 중앙 등)</span>
+          <span class="badge badge-issue">속보·시사</span>
+          <span class="verify pattern">⊙ PATTERN</span>
+        </div>
+        <h3>흰배경 + 옐로우 형광펜 키워드</h3>
+        <div class="analysis">
+          <div><b>디자인</b><span>상단 블랙 헤더 + 흰 본문 + 옐로우 마크. 신문 1면 문법.</span></div>
+          <div><b>카피</b><span>속보형 사실 진술 + 출처 명시.</span></div>
+          <div><b>차별화소</b><span>E 진짜경험(공식 출처) + V 일관관점</span></div>
+          <div><b>CTA</b><span>"자세한 분석은 본문 링크 →"</span></div>
+        </div>
+        <div class="quote">"하이라이트 박스는 한 페이지에 2~3개." — 그 이상은 강조가 강조를 잡아먹어 효과 반감.</div>
+      </div>
+    </div>
+
+    <!-- CASE: AI 양산 카드뉴스 (역사례) -->
+    <div class="case">
+      <div class="visual">
+        <div class="insta-card style-ai-mass ratio45">
+          <div class="warn-tag">AI 양산</div>
+          <div class="stamp">💰 재테크 정보</div>
+          <h4>2026년<br/>꼭 알아야 할<br/>재테크 5가지<br/>총정리</h4>
+          <div class="swipe"><i class="on"></i><i></i><i></i><i></i><i></i></div>
+        </div>
+        <div class="caption">AI 양산형 패턴 (역사례)</div>
+      </div>
+      <div class="info">
+        <div class="top">
+          <span class="handle" style="color:var(--warn);">⚠ AI 양산형 (안 좋은 예)</span>
+          <span class="badge" style="background:rgba(255,90,54,.15);color:var(--warn);border:1px solid rgba(255,90,54,.3);">패널티 위험</span>
+        </div>
+        <h3>왜 이런 카드뉴스는 도달이 안 나오는가</h3>
+        <div class="analysis">
+          <div><b>문제 1</b><span>"총정리"·"꼭 알아야 할" 같이 AI가 즉시 생성하는 진부한 표현</span></div>
+          <div><b>문제 2</b><span>그레이 톤 + 무명조 폰트 = 양산 디자인의 전형</span></div>
+          <div><b>문제 3</b><span>한 문장 포지셔닝 없음. 누가/누구에게 모름.</span></div>
+          <div><b>문제 4</b><span>구체적 경험·캡처·관점 0%. 정보 나열만.</span></div>
+        </div>
+        <div class="quote">"같은 정보라도 누가, 어떤 톤으로, 누구에게 말하는지가 다르면 다른 콘텐츠." — 이 차이가 2026년 알고리즘의 핵심 분기점.</div>
+      </div>
+    </div>
+
+    <!-- placeholder -->
+    <div class="case">
+      <div class="visual">
+        <div class="insta-card style-placeholder ratio45">
+          <div class="ph-box">📷<br/>여기에<br/>사용자님이<br/>분석 요청한<br/>실제 인스타<br/>게시물<br/>스크린샷이<br/>들어갑니다</div>
+        </div>
+        <div class="caption">URL 제공 시 채워질 슬롯</div>
+      </div>
+      <div class="info">
+        <div class="top">
+          <span class="handle" style="color:var(--ink-mute);">분석 대기 (URL 입력 필요)</span>
+        </div>
+        <h3>↑ 사용자님이 분석 원하시는 계정의 카드뉴스를 여기에 추가합니다</h3>
+        <div class="analysis">
+          <div><b>분석할 항목</b><span>디자인 — 색상, 폰트, 레이아웃</span></div>
+          <div><b>분석할 항목</b><span>카피 — 11개 공식 중 식별</span></div>
+          <div><b>분석할 항목</b><span>구조 — A/B/C/D 중 어느 것</span></div>
+          <div><b>분석할 항목</b><span>차별화소 — 7개 중 몇 개 충족</span></div>
+        </div>
+        <div class="quote">URL: instagram.com/p/XXXXX 또는 계정명만 알려주셔도 됩니다.</div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ============== TEMPLATES ============== -->
+<section>
+  <div class="container">
+    <h2><span class="num">12</span>바로 쓰는 카드뉴스 템플릿</h2>
+    <p class="sub">위 모든 패턴·공식·차별화를 결합한 즉시 사용 템플릿 2종.</p>
+
+    <div class="template">
+      <div class="head">
+        <h3>TEMPLATE 1 — 재테크 Decision Tree (12장)</h3>
+        <span class="cat">재테크 · 2026 NEW 구조</span>
+      </div>
+
+      <div class="pages-row">
+        <div>
+          <div class="insta-card style-uppity"><div class="stamp">MONEY</div><h4>당신은<br/>A형? B형?<br/>3초 자가진단</h4><div class="num">01</div></div>
+          <div class="label">P1 · 분기 후킹</div>
+        </div>
+        <div>
+          <div class="insta-card style-newneek"><div class="stamp">진단</div><h4 style="font-size:16px;">"이런 상황이라면<br/>당신은 A형"</h4></div>
+          <div class="label">P2~P3 · 자가진단</div>
+        </div>
+        <div>
+          <div class="insta-card style-money"><div class="stamp">A형 솔루션</div><div class="price" style="font-size:30px;">A형은 →</div><h4 style="font-size:14px;">"3개월 안에<br/>쓸 돈 = CMA"</h4></div>
+          <div class="label">P4~P6 · A형</div>
+        </div>
+        <div>
+          <div class="insta-card style-money"><div class="stamp">B형 솔루션</div><div class="price" style="font-size:30px;">B형은 →</div><h4 style="font-size:14px;">"1년 이상은<br/>정기예금"</h4></div>
+          <div class="label">P7~P9 · B형</div>
+        </div>
+        <div>
+          <div class="insta-card style-list" style="padding:18px;">
+            <div class="top"><span>A vs B</span><span>SAVE</span></div>
+            <h4 style="font-size:14px;margin:10px 0;">한 페이지 매트릭스</h4>
+            <ul style="font-size:11px;gap:4px;"><li><b>A형</b> 단기·유동성</li><li><b>B형</b> 장기·금리</li><li><b>혼합</b> 60:40 추천</li></ul>
+          </div>
+          <div class="label">P10~P11 · 요약</div>
+        </div>
+        <div>
+          <div class="insta-card style-careet"><div class="stamp">CTA</div><h4 style="font-size:16px;">당신 유형은?<br/>댓글에 인증 ↓<br/>친구한테 진단 ↗</h4></div>
+          <div class="label">P12 · CTA 3종</div>
+        </div>
+      </div>
+
+      <div class="specs">
+        <div><b>비율</b>4:5 (1080×1350)</div>
+        <div><b>색 팔레트</b>옐로우 + 블랙 + 다크</div>
+        <div><b>폰트</b>G마켓산스 + 프리텐다드</div>
+        <div><b>장수</b>12장 (Decision Tree)</div>
+        <div><b>카피 공식</b>⑪ DECISION FRAMING + ⑤ QUESTION</div>
+        <div><b>차별화소</b>D 의사결정기준 + V 일관관점</div>
+      </div>
+    </div>
+
+    <div class="template">
+      <div class="head">
+        <h3>TEMPLATE 2 — 시사 Q&A 친구톤 (7장)</h3>
+        <span class="cat">시사 · 정책 · 경제뉴스</span>
+      </div>
+
+      <div class="pages-row">
+        <div>
+          <div class="insta-card style-news"><div class="header"><span>이슈</span><span>오늘</span></div><div class="body"><h4 style="font-size:18px;"><mark>[키워드]</mark><br/>3분만에 정리</h4><div class="source" style="font-size:9px;">출처 명시</div></div></div>
+          <div class="label">P1 · 헤드라인</div>
+        </div>
+        <div>
+          <div class="insta-card style-newneek"><div class="stamp">Q.1</div><h4 style="font-size:16px;">이게 도대체<br/>뭔 일이지? 🦔</h4></div>
+          <div class="label">P2~3 · Q&A 1</div>
+        </div>
+        <div>
+          <div class="insta-card style-newneek"><div class="stamp">Q.2</div><h4 style="font-size:13px;">그래서<br/>내 일상에<br/>뭐가 달라져?</h4></div>
+          <div class="label">P4~5 · Q&A 2</div>
+        </div>
+        <div>
+          <div class="insta-card style-list" style="padding:16px;"><div class="top"><span>핵심 3줄</span><span>SAVE</span></div><h4 style="font-size:12px;margin:8px 0 10px;">오늘의 정리</h4><ul style="font-size:11px;"><li><b>1</b> 핵심1</li><li><b>2</b> 핵심2</li><li><b>3</b> 핵심3</li></ul></div>
+          <div class="label">P6 · 3줄 요약</div>
+        </div>
+        <div>
+          <div class="insta-card style-careet"><div class="stamp">SHARE</div><h4 style="font-size:16px;">내일 출근길<br/>친구한테<br/>전해주기 ↗</h4></div>
+          <div class="label">P7 · CTA</div>
+        </div>
+      </div>
+
+      <div class="specs">
+        <div><b>비율</b>4:5</div>
+        <div><b>색 팔레트</b>크림 + 다크그레이 + 옐로우</div>
+        <div><b>폰트</b>고운돋움 / Pretendard</div>
+        <div><b>장수</b>7장 (짧고 빠르게)</div>
+        <div><b>카피 공식</b>친구 톤 + 질문 + 공유 유도</div>
+        <div><b>마스코트</b>있으면 좋음 (시리즈 일관성)</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============== CHECKLIST ============== -->
+<section>
+  <div class="container">
+    <h2><span class="num">13</span>업로드 전 체크리스트 (35개)</h2>
+    <p class="sub">올리기 전에 이 체크리스트만 통과시키면 평균보다 2배 이상 도달이 나옵니다. AI 양산 패널티 회피 섹션이 새로 추가됐습니다.</p>
+
+    <div class="checklist">
+
+      <div class="checklist-group">
+        <h3 class="warn">0. AI 양산 패널티 회피 (2026 신규)</h3>
+        <ul>
+          <li>이 카드뉴스가 AI 도구로 1분 만에 만들어진 것처럼 보이지 않는가?</li>
+          <li>"총정리", "꼭 알아야 할", "완벽 정리" 같은 AI가 즉시 생성하는 진부한 표현을 쓰지 않았는가?</li>
+          <li>본인 이름, 본인 경험, 본인 캡처 등 'AI가 못 가져오는 것'이 최소 1개 들어갔는가?</li>
+          <li>출처가 명확히 표시되어 있는가? (정보 콘텐츠의 경우)</li>
+          <li>차별화 7소 중 최소 3개 이상 충족했는가?</li>
+        </ul>
+      </div>
+
+      <div class="checklist-group">
+        <h3>1. 후킹 (첫 2장)</h3>
+        <ul>
+          <li>첫 장 헤드라인이 0.5초 안에 무슨 말인지 파악되는가?</li>
+          <li>11개 후킹 공식 중 1개 이상을 정확히 사용했는가?</li>
+          <li>2장째에 핵심 메시지 또는 결과를 다시 제시했는가?</li>
+          <li>표지에 "총정리/모음집" 같은 진부한 표현을 쓰지 않았는가?</li>
+        </ul>
+      </div>
+
+      <div class="checklist-group">
+        <h3>2. 디자인</h3>
+        <ul>
+          <li>색상은 2~3개로 제한했는가?</li>
+          <li>비율은 4:5 또는 1:1인가? (재테크/시사는 4:5 권장)</li>
+          <li>장당 한국어 40~80자 범위인가?</li>
+          <li>한 페이지에 폰트 종류는 2개 이하인가?</li>
+          <li>모바일 가독성 — 최소 글자 크기 36px 이상인가?</li>
+        </ul>
+      </div>
+
+      <div class="checklist-group">
+        <h3>3. 스토리 구조</h3>
+        <ul>
+          <li>장수가 8~12장 사이인가? (2026 캐러셀 20장 한도)</li>
+          <li>마지막에서 두 번째 장에 '한 페이지 요약'을 넣었는가?</li>
+          <li>각 페이지에 한 가지 메시지만 있는가?</li>
+          <li><b>2026 NEW:</b> Decision Framing(상황별 선택 기준)이 들어갔는가?</li>
+        </ul>
+      </div>
+
+      <div class="checklist-group">
+        <h3>4. CTA (마지막 장)</h3>
+        <ul>
+          <li>저장 유도 문구가 있는가?</li>
+          <li><b>2026 NEW:</b> DM·친구 공유/태그 유도가 있는가? (좋아요보다 우선)</li>
+          <li>댓글 질문 또는 자기 인증 유도가 있는가?</li>
+          <li>팔로우 유도 한 줄이 있는가?</li>
+          <li>다음 콘텐츠 예고가 있는가?</li>
+        </ul>
+      </div>
+
+      <div class="checklist-group">
+        <h3>5. 캡션 & 알고리즘 (2026 업데이트)</h3>
+        <ul>
+          <li>캡션 첫 1~2줄에 핵심 키워드가 들어갔는가?</li>
+          <li><b>2026:</b> 해시태그는 5개 이내로 제한했는가?</li>
+          <li>본인이 첫 댓글로 추가 정보/질문을 달았는가?</li>
+          <li>업로드 시간이 타겟 활동 시간대인가? (한국 8시/12시/18-20시)</li>
+        </ul>
+      </div>
+
+      <div class="checklist-group">
+        <h3>6. 시리즈 IP / 브랜딩</h3>
+        <ul>
+          <li>이 게시물이 시리즈 N번째임이 명확한가?</li>
+          <li>고정 마스코트/캐릭터/페르소나가 있는가?</li>
+          <li>프로필 첫 9개 그리드에 어울리는 톤인가?</li>
+          <li>한 문장 포지셔닝 ("누가 / 누구에게 / 무엇을")이 명확한가?</li>
+        </ul>
+      </div>
+
+      <div class="checklist-group">
+        <h3>7. 신뢰성 (시사·정보형)</h3>
+        <ul>
+          <li>출처가 명시되어 있는가? (P1 또는 마지막 장)</li>
+          <li>수치/통계의 인용 시점이 명확한가?</li>
+          <li>법률·금융 정보일 경우 면책 문구가 있는가?</li>
+        </ul>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ============== SOURCES ============== -->
+<section class="sources">
+  <div class="container">
+    <h2><span class="num">14</span>참고 자료 (Sources)</h2>
+    <p class="sub">본 리포트(v2)는 다음 자료들의 분석을 기반으로 작성되었습니다. ★ 표시는 2026 핵심 자료.</p>
+    <ul>
+      <li>★ High Output Club — <a href="https://blog.highoutputclub.com/2026-instagram-algorithm-update/" target="_blank">2026 인스타그램 알고리즘 및 업데이트 총정리</a> (캐러셀 20장, 해시태그 5개, AI 콘텐츠 정책)</li>
+      <li>★ High Output Club — <a href="https://blog.highoutputclub.com/2026-reels-growth-instagram-accounts-strategy/" target="_blank">2026 인스타 성장 전략: 28개 콘텐츠로 3.4만 팔로워</a> (복희씨네 가족, 머니멘토 사례)</li>
+      <li>★ Studio Pupcy — <a href="https://www.studiopupcy.com/blog/instagramalgorithm2026/" target="_blank">2026 알고리즘: 도달은 늘었지만 전환이 안 되는 이유</a> (Decision Framing, Gen Z 프라이빗 공유 77%)</li>
+      <li>★ Mirra Blog — <a href="https://www.mirra.my/ko/blog/ai-carousel-tools-comparison-2026" target="_blank">카드뉴스 AI 제작 도구 TOP 5 비교 (2026)</a></li>
+      <li>Mirra Blog — <a href="https://www.mirra.my/en/blog/instagram-algorithm-2026-complete-analysis" target="_blank">Instagram Algorithm 2026 Complete Analysis</a></li>
+      <li>폴라애드 — <a href="https://polarad.co.kr/marketing-news/instagram-algorithm-2026-latest-trends-complete-an" target="_blank">인스타그램 알고리즘 2026 최신 트렌드</a></li>
+      <li>Carat 블로그 — <a href="https://carat.im/blog/ai-card-news-marketing" target="_blank">카드뉴스 제작 AI 찾는다면? 가장 쉬운 제작법 총정리</a></li>
+      <li>UPPITY 어피티 — <a href="https://www.instagram.com/uppity.official/" target="_blank">@uppity.official</a> / <a href="https://uppity.co.kr/" target="_blank">uppity.co.kr</a></li>
+      <li>뉴닉 NEWNEEK — <a href="https://www.instagram.com/newneek.official/" target="_blank">@newneek.official</a> / <a href="https://newneek.co/" target="_blank">newneek.co</a></li>
+      <li>캐릿 Careet — <a href="https://www.instagram.com/careet.official/" target="_blank">@careet.official</a></li>
+      <li>고구마팜 — <a href="https://gogumafarm.kr/%EB%8B%A4%EC%9D%8C-%EC%9E%A5%EC%9C%BC%EB%A1%9C-%EB%84%98%EA%B8%B0%EA%B2%8C-%EB%A7%8C%EB%93%9C%EB%8A%94-%EC%8D%B8%EB%84%A4%EC%9D%BC-%EA%B8%B0%ED%9A%8D-%EC%9D%B4%EB%A0%87%EA%B2%8C%EB%A7%8C-%ED%95%98/" target="_blank">다음 장으로 넘기게 만드는 썸네일 기획</a></li>
+      <li>Pixso 디자인 — <a href="https://pixso.net/kr/news/card-news-design/" target="_blank">SNS 카드뉴스 디자인 제작 가이드</a></li>
+    </ul>
+  </div>
+</section>
+
+<footer>
+  <p>인스타그램 카드뉴스 분석 리포트 v2 · 2026.05 · 한국 시장 · AI 자동화 시대 관점<br/>
+  분석할 계정·게시물 URL을 알려주시면 #10 섹션 placeholder에 실제 분석으로 채워넣습니다.</p>
+</footer>
+
+</body>
+</html>

@@ -34,7 +34,8 @@ jobs:
             echo "--- git diff output ---"
             echo "$DIFF_OUTPUT"
             echo "--- end diff ---"
-            FOLDER=$(echo "$DIFF_OUTPUT" | grep -oE '^daily/[^/]+' | sort -u | head -1 || true)
+            # sort -V -u | tail -1 → 자연 정렬 후 가장 최근(가장 큰 날짜) 폴더 선택
+            FOLDER=$(echo "$DIFF_OUTPUT" | grep -oE '^daily/[^/]+' | sort -V -u | tail -1 || true)
           fi
           if [ -n "$FOLDER" ] && [ -d "$FOLDER/png" ]; then
             COUNT=$(ls "$FOLDER/png/"*.mp4 2>/dev/null | wc -l || echo 0)

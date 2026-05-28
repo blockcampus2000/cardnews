@@ -26,7 +26,7 @@ HEIGHT = 1350
 VIDEO_SECONDS = 6
 
 # cover variant 캡처 시 hero 영역을 칠할 chroma key 색 (마젠타, 디자인에 안 쓰이는 색)
-CHROMA = "#FF00FF"
+CHROMA = "#00FF00"
 
 
 def natural_key(p: Path):
@@ -77,22 +77,26 @@ async def screenshot_normal(page, html_file: Path, out_png: Path):
 
 
 async def screenshot_cover(page, html_file: Path, out_png: Path):
-    """cover variant: hero=마젠타(chroma key용). overlay/video 숨김."""
+    """cover variant: cover-stack element만 alpha PNG로 캡처.
+    body/card/hero 모두 transparent로 강제 → cover-stack(텍스트)만 alpha PNG.
+    ffmpeg에서 video 위에 overlay 시 anti-aliasing 자연스럽게 합성됨."""
     url = html_file.resolve().as_uri()
     await page.goto(url, wait_until="load", timeout=60000)
     await page.evaluate("() => document.fonts.ready")
     await page.evaluate(
-        f"""() => {{
-          const hero = document.querySelector('.hero');
-          if (hero) {{
-            hero.style.background = '{CHROMA}';
-            hero.querySelectorAll('video').forEach(v => v.style.display = 'none');
-            hero.querySelectorAll('.hero__overlay').forEach(o => o.style.display = 'none');
-          }}
-        }}"""
+        """() => {
+          const css = document.createElement('style');
+          css.textContent = `
+            html, body { background: transparent !important; }
+            .card { background: transparent !important; }
+            .card--cover .hero { display: none !important; }
+          `;
+          document.head.appendChild(css);
+        }"""
     )
     await asyncio.sleep(0.4)
-    await page.screenshot(path=str(out_png), omit_background=False, full_page=False)
+    # omit_background=True → 투명 영역은 alpha 채널로 처리
+    await page.screenshot(path=str(out_png), omit_background=True, full_page=False)
 
 
 def compose_overlay(card_png: Path, video_path: Path, hero: dict, out_mp4: Path) -> bool:
@@ -120,15 +124,16 @@ def compose_overlay(card_png: Path, video_path: Path, hero: dict, out_mp4: Path)
 
 
 def compose_cover(card_png: Path, video_path: Path, out_mp4: Path) -> bool:
-    """cover variant: video를 전체 base로 깔고 PNG 오버레이(chroma key 마젠타 투명)."""
+    """cover variant: video를 base로 + alpha PNG(텍스트만) overlay.
+    PNG가 진짜 alpha 채널을 가져서 anti-aliasing이 자연스럽게 합성됨 (색 누락 없음)."""
     cmd = [
         "ffmpeg", "-y", "-hide_banner", "-loglevel", "error",
         "-stream_loop", "-1", "-i", str(video_path),
         "-loop", "1", "-i", str(card_png),
         "-filter_complex",
         f"[0:v]scale={WIDTH}:{HEIGHT}:force_original_aspect_ratio=increase,"
-        f"crop={WIDTH}:{HEIGHT}[bg];"
-        f"[1:v]scale={WIDTH}:{HEIGHT},colorkey=0xFF00FF:0.30:0.10[fg];"
+        f"crop={WIDTH}:{HEIGHT},eq=brightness=-0.15:contrast=1.05[bg];"
+        f"[1:v]scale={WIDTH}:{HEIGHT}[fg];"
         f"[bg][fg]overlay=0:0:eof_action=repeat",
         "-c:v", "libx264", "-preset", "fast", "-crf", "23",
         "-pix_fmt", "yuv420p", "-t", str(VIDEO_SECONDS),

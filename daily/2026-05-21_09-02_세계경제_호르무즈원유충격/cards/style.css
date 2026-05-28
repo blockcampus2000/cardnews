@@ -172,16 +172,18 @@ html, body {
   margin-top: 14px;
 }
 
-/* ===== Cover variant (card 1) — 영상 풀 + 하단 텍스트 패널 (좌정렬) ===== */
+/* ===== Cover variant (card 1) — 사진(영상) + 가운데 큰 헤드라인 (highestlevel33 스타일) ===== */
 .card--cover .hero { height: 100%; }
 .card--cover .content { display: none; }
-/* 영상 하단부에 자연스럽게 어둠 그라데이션 (텍스트 가독성) */
+/* 위는 살짝 어둠 (chip 가독성), 가운데는 사진 그대로, 아래는 진한 어둠 (헤드라인 가독성) */
 .card--cover .hero__overlay {
   background: linear-gradient(180deg,
-    rgba(0,0,0,0) 0%,
+    rgba(0,0,0,0.40) 0%,
+    rgba(0,0,0,0.15) 18%,
+    rgba(0,0,0,0) 35%,
     rgba(0,0,0,0) 50%,
-    rgba(0,0,0,0.55) 78%,
-    rgba(0,0,0,0.92) 100%);
+    rgba(0,0,0,0.45) 70%,
+    rgba(0,0,0,0.88) 100%);
 }
 .card--cover .cover-stack {
   position: absolute;
@@ -189,69 +191,75 @@ html, body {
   z-index: 3;
   display: flex;
   flex-direction: column;
-  padding: 56px 70px 90px;
+  padding: 70px 60px 90px;
 }
 .card--cover .cover-stack__center::before { display: none; }
-/* 상단 chip은 그대로 위 가운데 */
 .card--cover .cover-stack__top {
   display: flex;
   justify-content: center;
 }
-/* 메인 텍스트 영역: 좌하단 정렬 */
+/* 메인 텍스트: 아래쪽으로 모음 + 가운데 정렬 */
 .card--cover .cover-stack__center {
   flex: 1;
   display: flex;
   flex-direction: column;
   justify-content: flex-end;
-  text-align: left;
-  padding-bottom: 8px;
+  align-items: center;
+  text-align: center;
+  padding-bottom: 12px;
 }
-/* 하단 핸들·신용: 좌측 정렬 */
 .card--cover .cover-stack__bottom {
   display: flex;
+  justify-content: center;
   align-items: center;
-  gap: 14px;
-  margin-top: 22px;
+  margin-top: 28px;
 }
+/* 상단 chip — 자간 넓게, 작게, 미니멀 */
 .card--cover .cover-chip {
   display: inline-block;
-  padding: 12px 28px;
-  background: rgba(255,255,255,0.95);
+  padding: 10px 22px;
+  background: rgba(255,255,255,0.92);
   color: var(--text-dark);
-  font-size: 24px;
+  font-size: 22px;
   font-weight: 800;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.08em;
   border-radius: 999px;
 }
+/* eyebrow — chip 처럼 자간 넓고 작음 */
 .card--cover .cover-eyebrow {
-  color: var(--orange-light);
-  font-size: 24px;
-  font-weight: 700;
-  letter-spacing: 0.02em;
-  margin-bottom: 18px;
+  color: rgba(255,255,255,0.85);
+  font-size: 22px;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  margin-bottom: 26px;
+  text-transform: none;
 }
+/* 메인 헤드라인 — 매우 크게, 가운데, 흰색 */
 .card--cover .cover-title {
   color: #fff;
-  font-size: 84px;
+  font-size: 96px;
   font-weight: 900;
-  line-height: 1.16;
-  letter-spacing: -0.035em;
+  line-height: 1.14;
+  letter-spacing: -0.04em;
 }
+/* 핵심 키워드만 강조 (분홍/오렌지 강조) */
 .card--cover .cover-title .hl {
-  color: var(--orange-light);
+  color: #ff5e85;
 }
+/* sub — 작게, 가운데, 옅은 흰 */
 .card--cover .cover-sub {
-  color: rgba(255,255,255,0.75);
-  font-size: 24px;
+  color: rgba(255,255,255,0.7);
+  font-size: 22px;
   font-weight: 500;
-  letter-spacing: -0.01em;
-  margin-top: 20px;
-}
-.card--cover .cover-handle {
-  color: var(--orange-light);
-  font-size: 24px;
-  font-weight: 800;
   letter-spacing: 0.02em;
+  margin-top: 22px;
+}
+/* handle — 작게, 가운데, 자간 */
+.card--cover .cover-handle {
+  color: rgba(255,255,255,0.9);
+  font-size: 24px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
 }
 
 /* ===== Summary card (card 2 - stat list) ===== */

@@ -56,15 +56,24 @@ html, body {
   object-fit: cover;
   display: block;
 }
+.hero {
+  background: linear-gradient(135deg, #f8edd9 0%, #f1dfbf 50%, #ead0a3 100%);
+}
 .hero__overlay {
   position: absolute;
   inset: 0;
   background: linear-gradient(180deg,
-    rgba(0,0,0,0.35) 0%,
-    rgba(0,0,0,0.10) 25%,
-    rgba(0,0,0,0.10) 60%,
-    rgba(0,0,0,0.55) 100%);
+    rgba(255,140,40,0.08) 0%,
+    rgba(255,140,40,0.04) 50%,
+    rgba(45,24,16,0.12) 100%);
 }
+/* video가 있으면 cream fallback 위에 영상이 보임 */
+.hero video {
+  position: relative;
+  z-index: 1;
+}
+.hero__overlay { z-index: 2; }
+.hero__chip, .hero__handle, .hero__source { z-index: 3; }
 
 /* Eyebrow chip (top-left of hero) */
 .hero__chip {

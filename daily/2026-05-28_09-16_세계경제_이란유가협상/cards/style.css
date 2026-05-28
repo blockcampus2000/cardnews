@@ -177,11 +177,7 @@ html, body {
 .card--cover .content { display: none; }
 /* 밝은 영상에도 흰 텍스트 가독성 확보 — overlay 강화 */
 .card--cover .hero__overlay {
-  background: linear-gradient(180deg,
-    rgba(0,0,0,0.45) 0%,
-    rgba(0,0,0,0.55) 30%,
-    rgba(0,0,0,0.65) 65%,
-    rgba(0,0,0,0.7) 100%);
+  background: rgba(0, 0, 0, 0.30);
 }
 .card--cover .cover-stack {
   position: absolute;
@@ -199,10 +195,8 @@ html, body {
   content: '';
   position: absolute;
   inset: -60px -80px;
-  background: radial-gradient(ellipse at center,
-    rgba(0,0,0,0.55) 0%,
-    rgba(0,0,0,0.30) 55%,
-    transparent 100%);
+  background: rgba(0, 0, 0, 0.80);
+  border-radius: 24px;
   z-index: -1;
 }
 .card--cover .cover-stack__top {

@@ -77,7 +77,8 @@ async def screenshot_normal(page, html_file: Path, out_png: Path):
 
 
 async def screenshot_cover(page, html_file: Path, out_png: Path):
-    """cover variant: hero 영역을 마젠타로 칠해서 캡처 → ffmpeg colorkey로 투명화."""
+    """cover variant: hero=마젠타(chroma key용) + 텍스트 박스는 검정 100% 강제로
+    chroma key 적용 시 자주색(블렌딩) 없이 깨끗하게 처리."""
     url = html_file.resolve().as_uri()
     await page.goto(url, wait_until="load", timeout=60000)
     await page.evaluate("() => document.fonts.ready")
@@ -89,6 +90,17 @@ async def screenshot_cover(page, html_file: Path, out_png: Path):
             hero.querySelectorAll('video').forEach(v => v.style.display = 'none');
             hero.querySelectorAll('.hero__overlay').forEach(o => o.style.display = 'none');
           }}
+          // 텍스트 박스의 반투명 배경을 screenshot 시 검정 100%로 강제
+          // (chroma key 적용 후 ffmpeg에서 다시 80%로 재합성하는 방식)
+          const css = document.createElement('style');
+          css.id = '_screenshot_override';
+          css.textContent = `
+            .card--cover .cover-stack__center::before {{
+              background: #000 !important;
+              opacity: 1 !important;
+            }}
+          `;
+          document.head.appendChild(css);
         }}"""
     )
     await asyncio.sleep(0.4)
@@ -120,7 +132,9 @@ def compose_overlay(card_png: Path, video_path: Path, hero: dict, out_mp4: Path)
 
 
 def compose_cover(card_png: Path, video_path: Path, out_mp4: Path) -> bool:
-    """cover variant: video를 전체 base로 깔고 PNG 오버레이(chroma key 마젠타 투명)."""
+    """cover variant: video를 전체 base로 깔고 PNG 오버레이.
+    PNG의 마젠타 영역은 chroma key로 투명화(영상 보임),
+    검정(텍스트 박스)은 alpha 0.8로 낮춰서 영상이 살짝 비치도록."""
     cmd = [
         "ffmpeg", "-y", "-hide_banner", "-loglevel", "error",
         "-stream_loop", "-1", "-i", str(video_path),
@@ -128,7 +142,11 @@ def compose_cover(card_png: Path, video_path: Path, out_mp4: Path) -> bool:
         "-filter_complex",
         f"[0:v]scale={WIDTH}:{HEIGHT}:force_original_aspect_ratio=increase,"
         f"crop={WIDTH}:{HEIGHT}[bg];"
-        f"[1:v]scale={WIDTH}:{HEIGHT},colorkey=0xFF00FF:0.30:0.10[fg];"
+        # PNG: 마젠타 투명화 + 추가로 검정에 가까운 픽셀(텍스트 박스)의 alpha를 0.8로
+        f"[1:v]scale={WIDTH}:{HEIGHT},colorkey=0xFF00FF:0.30:0.10,"
+        f"format=rgba,geq=r='r(X,Y)':g='g(X,Y)':b='b(X,Y)':"
+        f"a='if(lt(alpha(X,Y),128),alpha(X,Y),"
+        f"if(lt(max(r(X,Y),max(g(X,Y),b(X,Y))),40),204,alpha(X,Y)))'[fg];"
         f"[bg][fg]overlay=0:0:eof_action=repeat",
         "-c:v", "libx264", "-preset", "fast", "-crf", "23",
         "-pix_fmt", "yuv420p", "-t", str(VIDEO_SECONDS),
@@ -159,7 +177,29 @@ def compose_static(card_png: Path, out_mp4: Path) -> bool:
     return True
 
 
-async def render_card(page, html_file: Path):
+def verify_motion(mp4: Path) -> bool:
+    """mp4에서 t=1s와 t=5s 프레임을 추출해 md5 비교 → 다르면 motion 있음."""
+    import hashlib
+    tmp_dir = OUT_DIR / "_verify"
+    tmp_dir.mkdir(exist_ok=True)
+    a = tmp_dir / f"{mp4.stem}_a.png"
+    b = tmp_dir / f"{mp4.stem}_b.png"
+    for t, out in [(1, a), (5, b)]:
+        subprocess.run(
+            ["ffmpeg", "-y", "-hide_banner", "-loglevel", "error",
+             "-i", str(mp4), "-vframes", "1", "-ss", str(t), str(out)],
+            capture_output=True,
+        )
+    if not (a.exists() and b.exists()):
+        return False
+    ha = hashlib.md5(a.read_bytes()).hexdigest()
+    hb = hashlib.md5(b.read_bytes()).hexdigest()
+    a.unlink(missing_ok=True)
+    b.unlink(missing_ok=True)
+    return ha != hb
+
+
+async def render_card(page, html_file: Path, max_attempts: int = 2):
     info = await measure_card(page, html_file)
     variant = info.get("variant", "")
     video_src = info.get("video_src")
@@ -182,21 +222,38 @@ async def render_card(page, html_file: Path):
         if not video_path.exists():
             video_path = None
 
-    if is_cover and video_path:
-        ok = compose_cover(card_png, video_path, out_mp4)
-        kind = "cover+video"
-    elif video_path and hero:
-        ok = compose_overlay(card_png, video_path, hero, out_mp4)
-        kind = f"overlay@{hero['x']},{hero['y']} {hero['w']}x{hero['h']}"
-    else:
+    # video 없는 카드 (cta) → 정적 영상으로
+    if not video_path:
         ok = compose_static(card_png, out_mp4)
-        kind = "static"
+        card_png.unlink(missing_ok=True)
+        if ok:
+            print(f"    -> {out_mp4.relative_to(ROOT)} (static, no video)")
+        return ok
 
+    # 영상 합성 시도 + 검증 + 재시도
+    for attempt in range(1, max_attempts + 1):
+        if is_cover:
+            ok = compose_cover(card_png, video_path, out_mp4)
+            kind = "cover+video"
+        else:
+            ok = compose_overlay(card_png, video_path, hero, out_mp4)
+            kind = f"overlay@{hero['x']},{hero['y']} {hero['w']}x{hero['h']}"
+
+        if not ok:
+            print(f"    [!] attempt {attempt} ffmpeg fail")
+            continue
+
+        if verify_motion(out_mp4):
+            print(f"    -> {out_mp4.relative_to(ROOT)} ({kind}) motion OK")
+            card_png.unlink(missing_ok=True)
+            return True
+        print(f"    [!] attempt {attempt} motion verify FAILED (still frame). retrying...")
+
+    # 모든 시도 실패 → static fallback (영상 없이라도 카드는 나가야 함)
+    print(f"    [!] all attempts failed, fallback to static PNG video")
+    compose_static(card_png, out_mp4)
     card_png.unlink(missing_ok=True)
-
-    if ok:
-        print(f"    -> {out_mp4.relative_to(ROOT)} ({kind})")
-    return ok
+    return False
 
 
 async def main():
@@ -216,6 +273,13 @@ async def main():
 
         for html_file in cards:
             await render_card(page, html_file)
+
+        # _verify 임시 디렉토리 정리
+        verify_dir = OUT_DIR / "_verify"
+        if verify_dir.exists():
+            for f in verify_dir.iterdir():
+                f.unlink()
+            verify_dir.rmdir()
 
         await browser.close()
 

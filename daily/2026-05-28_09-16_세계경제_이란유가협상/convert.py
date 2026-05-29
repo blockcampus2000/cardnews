@@ -46,10 +46,12 @@ async def measure_card(page, html_file: Path):
           const variant = card ? Array.from(card.classList).find(c => c.startsWith('card--')) || '' : '';
           const hero = document.querySelector('.hero');
           const v = hero ? hero.querySelector('video') : null;
+          const img = hero ? hero.querySelector('img') : null;
           const rect = hero ? hero.getBoundingClientRect() : null;
           return {
             variant,
             video_src: v ? v.getAttribute('src') : null,
+            img_src: img ? img.getAttribute('src') : null,
             hero: rect ? {
               x: Math.round(rect.left),
               y: Math.round(rect.top),
@@ -190,15 +192,19 @@ async def render_card(page, html_file: Path, max_attempts: int = 2):
     info = await measure_card(page, html_file)
     variant = info.get("variant", "")
     video_src = info.get("video_src")
+    img_src = info.get("img_src")
     hero = info.get("hero")
     is_cover = (variant == "card--cover")
+    # cover variant인데 video가 없고 img만 있으면 → photo 기반 (정적 6초 영상)
+    is_cover_photo = is_cover and not video_src and img_src
 
     out_mp4 = OUT_DIR / f"{html_file.stem}.mp4"
     card_png = OUT_DIR / f"_{html_file.stem}_card.png"
 
-    print(f"[*] {html_file.name} ({variant})")
+    print(f"[*] {html_file.name} ({variant}{' photo' if is_cover_photo else ''})")
 
-    if is_cover:
+    # cover + photo: 일반 카드처럼 PNG 전체 캡처 (img는 그대로 렌더링)
+    if is_cover and not is_cover_photo:
         await screenshot_cover(page, html_file, card_png)
     else:
         await screenshot_normal(page, html_file, card_png)
@@ -209,12 +215,13 @@ async def render_card(page, html_file: Path, max_attempts: int = 2):
         if not video_path.exists():
             video_path = None
 
-    # video 없는 카드 (cta) → 정적 영상으로
+    # video 없는 카드 (cover-photo, cta 등) → 정적 6초 영상
     if not video_path:
         ok = compose_static(card_png, out_mp4)
         card_png.unlink(missing_ok=True)
         if ok:
-            print(f"    -> {out_mp4.relative_to(ROOT)} (static, no video)")
+            kind = "cover-photo" if is_cover_photo else "static, no video"
+            print(f"    -> {out_mp4.relative_to(ROOT)} ({kind})")
         return ok
 
     # 영상 합성 시도 + 검증 + 재시도
